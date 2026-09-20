@@ -13,3 +13,13 @@ yarn-error.log*
 
 # Maven
 target/
+
+# Local Environment & Secrets
+application-local.properties
+*.local.properties
+.env
+
+# Word & Office Documents
+*.docx
+~$*.docx
+*.pdf

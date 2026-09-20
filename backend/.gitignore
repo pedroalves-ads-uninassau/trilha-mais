@@ -31,3 +31,14 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local Environment & Secrets ###
+application-local.properties
+src/main/resources/application-local.properties
+*.local.properties
+.env
+
+### Word & Office Documents ###
+*.docx
+~$*.docx
+*.pdf
