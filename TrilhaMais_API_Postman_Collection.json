@@ -1,0 +1,378 @@
+{
+  "info": {
+    "name": "Trilha+ API — Coleção Postman Oficial (UNINASSAU)",
+    "_postman_id": "trilhamais-api-v1",
+    "description": "Coleção completa e organizada de endpoints do Back-end Trilha+ (Spring Boot 4 / Java 21) para integração com o Front-end React Native e homologação acadêmica.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01. Autenticação & Usuários",
+      "item": [
+        {
+          "name": "Cadastrar Novo Estudante",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Pedro Alves\",\n  \"email\": \"pedro.alves@uninassau.edu.br\",\n  \"password\": \"senhaForte123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login (Obter Token JWT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.accessToken) {",
+                  "    pm.collectionVariables.set('token', jsonData.accessToken);",
+                  "    console.log('Token JWT capturado com sucesso!');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"pedro.alves@uninassau.edu.br\",\n  \"password\": \"senhaForte123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Consultar Perfil do Estudante (/api/users/me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02. Matérias",
+      "item": [
+        {
+          "name": "Listar Matérias do Estudante",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/subjects",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "subjects"]
+            }
+          }
+        },
+        {
+          "name": "Criar Nova Matéria",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Estrutura de Dados\",\n  \"description\": \"Algoritmos, listas, filas, pilhas e árvores\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/subjects",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "subjects"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03. Assuntos / Tópicos",
+      "item": [
+        {
+          "name": "Criar Tópico para a Matéria",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Árvores Binárias de Busca\",\n  \"description\": \"Inserção, busca e balanceamento AVL\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/subjects/1/topics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "subjects", "1", "topics"]
+            }
+          }
+        },
+        {
+          "name": "Listar Tópicos da Matéria",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/subjects/1/topics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "subjects", "1", "topics"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04. Tutor de IA (Groq Cloud)",
+      "item": [
+        {
+          "name": "Tirar Dúvida com IA (/api/ai/ask)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Qual é a diferença entre árvore binária simples e árvore AVL?\",\n  \"topicId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/ask",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "ask"]
+            }
+          }
+        },
+        {
+          "name": "Resumo de Conteúdo com IA (/api/ai/summarize)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Uma árvore AVL é uma árvore de busca balanceada na qual as alturas das subárvores diferem no máximo por 1 unidade...\",\n  \"topicName\": \"Árvores Binárias de Busca\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/summarize",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "summarize"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05. Simulados & Quiz",
+      "item": [
+        {
+          "name": "Gerar Simulado Dinâmico (10 questões)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Simulado de Revisão — Árvores\",\n  \"topicId\": 1,\n  \"questionCount\": 10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/quizzes/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "quizzes", "generate"]
+            }
+          }
+        },
+        {
+          "name": "Submeter Respostas e Receber Nota",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": [\n    {\n      \"questionId\": 1,\n      \"selectedOptionId\": 1\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/quizzes/1/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "quizzes", "1", "submit"]
+            }
+          }
+        },
+        {
+          "name": "Consultar Histórico de Simulados",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/quizzes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "quizzes"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "06. Resultados & Desempenho",
+      "item": [
+        {
+          "name": "Resumo Geral de Performance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/performance/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "performance", "summary"]
+            }
+          }
+        },
+        {
+          "name": "Diagnóstico de Domínio por Assunto",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/performance/topics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "performance", "topics"]
+            }
+          }
+        },
+        {
+          "name": "Recomendações e Plano de Estudos por IA",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/performance/recommendations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "performance", "recommendations"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

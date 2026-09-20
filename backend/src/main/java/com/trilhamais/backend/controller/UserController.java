@@ -36,7 +36,7 @@ public class UserController {
      * GET /api/users/profile
      * Requer cabecalho Authorization: Bearer <token_jwt>
      */
-    @GetMapping("/profile")
+    @GetMapping({"/profile", "/me"})
     public ResponseEntity<UserResponse> getProfile(@org.springframework.security.core.annotation.AuthenticationPrincipal com.trilhamais.backend.model.User user) {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

@@ -1,6 +1,7 @@
 package com.trilhamais.backend.repository;
 
 import com.trilhamais.backend.model.QuizAnswer;
+import com.trilhamais.backend.model.QuizStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,4 +14,12 @@ public interface QuizAnswerRepository extends JpaRepository<QuizAnswer, Long> {
     List<QuizAnswer> findByQuizId(Long quizId);
 
     Optional<QuizAnswer> findByQuizIdAndQuestionId(Long quizId, Long questionId);
+
+    List<QuizAnswer> findByQuizUserIdAndQuizStatus(Long userId, QuizStatus status);
+
+    List<QuizAnswer> findByQuizUserIdAndQuizStatusAndQuestionTopicId(Long userId, QuizStatus status, Long topicId);
+
+    long countByQuizUserIdAndQuizStatus(Long userId, QuizStatus status);
+
+    long countByQuizUserIdAndQuizStatusAndIsCorrectTrue(Long userId, QuizStatus status);
 }

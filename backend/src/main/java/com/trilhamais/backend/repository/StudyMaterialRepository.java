@@ -16,6 +16,8 @@ public interface StudyMaterialRepository extends JpaRepository<StudyMaterial, Lo
 
     List<StudyMaterial> findByTopicIdAndTopicSubjectUserIdOrderByCreatedAtDesc(Long topicId, Long userId);
 
+    List<StudyMaterial> findByTopicId(Long topicId);
+
     Optional<StudyMaterial> findByIdAndTopicSubjectUserId(Long id, Long userId);
 
     long countByTopicId(Long topicId);

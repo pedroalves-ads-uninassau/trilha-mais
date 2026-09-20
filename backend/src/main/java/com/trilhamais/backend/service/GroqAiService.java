@@ -209,4 +209,35 @@ public class GroqAiService {
                 "Fixação com foco em resolução rápida de exercícios"
         );
     }
+
+    public String generateStudyPlan(List<String> weakTopicNames) {
+        if (weakTopicNames == null || weakTopicNames.isEmpty()) {
+            return "Parabéns pelo seu desempenho! Todos os tópicos avaliados apresentaram taxa de acerto satisfatória. Continue praticando simulados periodicamente para consolidar o aprendizado.";
+        }
+
+        String topicsFormatted = String.join(", ", weakTopicNames);
+
+        if (isGroqConfigured()) {
+            try {
+                String systemPrompt = "Você é o tutor acadêmico de inteligência artificial da plataforma Trilha+. " +
+                        "Seu objetivo é gerar um plano de estudos objetivo e motivador em língua portuguesa " +
+                        "com recomendações práticas e passos de estudo para que o aluno supere suas dificuldades específicas.";
+                String userMessage = "O estudante realizou simulados avaliativos e apresentou taxa de acerto baixa nos seguintes assuntos: " +
+                        topicsFormatted + ". Elabore um plano de ação em 3 passos práticos para o estudante recuperar o domínio desses conteúdos.";
+
+                return callGroqChat(systemPrompt, userMessage);
+            } catch (Exception e) {
+                log.warn("Falha ao chamar Groq Cloud para plano de estudo, ativando plano didático de contingência: {}", e.getMessage());
+            }
+        }
+
+        return "Plano de Estudo Personalizado Trilha+:\n\n" +
+                "1. Revisão Teórica Imediata: Dedique 30 minutos para reler os materiais e resumos dos assuntos: " + topicsFormatted + ".\n" +
+                "2. Mapeamento de Falhas: Analise as questões que errou no último simulado e identifique se a dúvida foi conceitual ou de interpretação.\n" +
+                "3. Novo Simulado de Fixação: Gere um simulado focado de 10 questões desses tópicos no Trilha+ para validar sua evolução.";
+    }
+
+    public String getProviderName() {
+        return isGroqConfigured() ? "Groq Cloud (" + model + ")" : "Contingência Pedagógica Trilha+";
+    }
 }

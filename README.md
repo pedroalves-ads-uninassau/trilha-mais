@@ -1,178 +1,133 @@
-# 🎓 TRILHA — Plataforma Inteligente de Aprendizagem
+# 🎓 TRILHA+ — Plataforma Inteligente de Aprendizagem
 
-> **Projeto Acadêmico — Análise e Desenvolvimento de Sistemas**
+> **Projeto Acadêmico — Análise e Desenvolvimento de Sistemas**  
+> **Centro Universitário Maurício de Nassau (UNINASSAU) — Caruaru/PE**  
+> **Disciplina:** Laboratório de Empreendimentos Inovadores | 4º Período  
+> **Orientador:** Professor Antonio
 
-O **TRILHA** é uma plataforma web inteligente de aprendizagem desenvolvida como **projeto acadêmico** pelos alunos do curso de **Análise e Desenvolvimento de Sistemas da UNINASSAU — Caruaru**.
-
-A proposta é desenvolver uma solução completa para auxiliar estudantes no planejamento, organização e acompanhamento dos estudos, reunindo em uma única plataforma recursos como **roadmap, trilhas de aprendizagem, calendário, conteúdos, questões, simulados, acompanhamento de desempenho e Inteligência Artificial**.
-
-O projeto busca aplicar, de forma prática, conhecimentos relacionados a **Engenharia de Software, Desenvolvimento Web, Banco de Dados, Inteligência Artificial, Prototipação, Testes, Documentação e Gerenciamento de Projetos**.
-
----
-
-## 📚 Informações Acadêmicas
-
-- **Instituição:** UNINASSAU — Caruaru
-- **Curso:** Análise e Desenvolvimento de Sistemas
-- **Turma:** 4º Ano — Turma B
-- **Orientador:** Professor Antonio
-- **Tipo:** Projeto Acadêmico
+O **TRILHA+** é uma solução educacional completa desenvolvida para auxiliar estudantes universitários no planejamento, organização e acompanhamento contínuo dos estudos. A plataforma reúne em um único ecossistema: **gestão de matérias e tópicos, materiais didáticos, tutoria inteligente com IA Generativa gratuita (Groq Cloud / Llama 3.3 70B), simulados avaliativos dinâmicos com proteção anti-fraude e diagnóstico analítico de desempenho acadêmico**.
 
 ---
 
-## 👥 Equipe
+## 👥 Equipe do Projeto
 
-| Integrante | Matrícula |
-|---|---:|
-| Pedro Francisco Alves Neto | 01864946 |
-| Allan Victor Morais De Lima | 01813117 |
-| Luiz Henrique Manoel da Silva | 01777463 |
-| Gabriel Henrique da Silva | 01777141 |
-| Vinicius Santos Cansanção | 01813852 |
-
-A equipe contará com a definição de responsabilidades técnicas e organizacionais, incluindo a atuação de um **Gerente de Projetos**, responsável pelo planejamento, acompanhamento das atividades, organização dos prazos e comunicação entre os integrantes.
+| Integrante | Matrícula | Responsabilidade Principal |
+| :--- | :---: | :--- |
+| **Pedro Francisco Alves Neto** | **01864946** | **Arquitetura, Desenvolvimento e Testes do Back-end** |
+| **Allan Victor Morais De Lima** | **01813117** | **Desenvolvimento do Back-end e Integrações** |
+| Gabriel Henrique da Silva | 01777141 | Front-end / Mobile (React Native) |
+| Vinicius Santos Cansanção | 01813852 | Front-end / Mobile (React Native) |
+| Luiz Henrique Manoel da Silva | 01777463 | Documentação e Gestão do Projeto |
 
 ---
 
-## 🎯 Objetivo do Projeto
+## 🏗️ Arquitetura e Stack Tecnológica
 
-O objetivo do **TRILHA** é desenvolver uma plataforma que auxilie estudantes a organizar sua rotina de estudos e acompanhar sua evolução acadêmica.
+O projeto foi concebido em uma arquitetura moderna desacoplada (API First):
 
-A plataforma permitirá que o estudante tenha uma visão estruturada de sua jornada de aprendizagem, podendo definir objetivos, acompanhar conteúdos, realizar questões e simulados e receber recomendações de acordo com seu desempenho.
+```
+┌─────────────────────────────────┐
+│     Aplicativo Mobile (Front)   │
+│       React Native / Expo       │
+└────────────────┬────────────────┘
+                 │ HTTP REST / JSON (CORS Ativo)
+                 ▼
+┌─────────────────────────────────┐
+│      Back-end RESTful API       │
+│   Java 21 LTS + Spring Boot 4   │
+│   Spring Security + Bearer JWT  │
+└───────┬─────────────────┬───────┘
+        │                 │
+        ▼                 ▼
+┌──────────────┐   ┌──────────────┐
+│ Banco MySQL  │   │  Groq Cloud  │
+│  Relacional  │   │  Llama 3.3   │
+│   (JPA/ORM)  │   │  (IA Grátis) │
+└──────────────┘   └──────────────┘
+```
 
----
+### ⚙️ Back-end (100% Concluído e Homologado)
+- **Linguagem & Framework:** Java 21 (LTS) e Spring Boot 4.
+- **Banco de Dados:** MySQL 8.0 com Spring Data JPA e Hibernate.
+- **Segurança:** Spring Security 6, senhas criptografadas em **BCrypt** e tokens **JWT (HMAC-SHA256)** com sessão Stateless.
+- **Inteligência Artificial:** **Groq Cloud API** com modelo open-source **Llama 3.3 70B Versatile** (latência ultrabaixa e **custo operacional zero**).
+- **Documentação de APIs:** **Springdoc OpenAPI 3.0** e interface interativa **Swagger UI**.
+- **Qualidade & Confiabilidade:** **70 testes automatizados** (Surefire / JUnit 5 / MockMvc) com 100% de sucesso.
 
-## 💡 Proposta
-
-O TRILHA busca centralizar diferentes ferramentas de estudo em um único ambiente.
-
-A plataforma será estruturada em torno da ideia de uma **jornada de aprendizagem**, na qual o estudante poderá visualizar:
-
-> **Onde está → O que precisa estudar → Como estudar → Como está evoluindo → O que precisa melhorar**
-
-A proposta é utilizar tecnologia para tornar o processo de aprendizagem mais organizado, acompanhado e personalizado.
-
----
-
-## 🤖 Inteligência Artificial
-
-A Inteligência Artificial será um dos principais recursos da plataforma.
-
-O assistente de IA poderá auxiliar o estudante em diferentes etapas do processo de aprendizagem, incluindo:
-
-- Explicação de conteúdos;
-- Esclarecimento de dúvidas;
-- Explicação de questões;
-- Geração de questões;
-- Geração de simulados;
-- Recomendações de estudo;
-- Identificação de dificuldades;
-- Sugestões de conteúdos;
-- Apoio durante a jornada de aprendizagem.
-
-A IA será integrada à plataforma como uma ferramenta de apoio ao estudante, complementando os demais recursos do sistema.
+### 📱 Front-end
+- **Tecnologias:** React Native com Expo e TypeScript.
 
 ---
 
-## 🚀 Principais Funcionalidades
+## 🚀 Principais Módulos do Sistema
 
-### 👤 Usuário
-
-- Cadastro;
-- Login e perfil do estudante;
-- Roadmap personalizado de estudos;
-- Calendário e planejamento;
-- Trilhas de aprendizagem;
-- Histórico de desempenho;
-- Assistente de estudos com IA.
-
-*(Nota: Alguns itens foram restaurados com base no escopo geral, já que o texto original foi cortado nesta seção).*
+1. **🔐 Autenticação & Perfil (`/api/auth`, `/api/users`)**:
+   - Cadastro, login seguro, emissão de JWT e consulta de perfil (`/api/users/profile` e `/api/users/me`).
+2. **📚 Gestão de Estudos (`/api/subjects`, `/api/topics`, `/api/study-materials`)**:
+   - Organização hierárquica Matéria ➔ Assuntos ➔ Anotações e Resumos.
+   - **Isolamento Multitenancy:** cada estudante tem acesso estrito apenas aos seus próprios dados.
+3. **🤖 Tutor de Estudos com IA Groq (`/api/ai`)**:
+   - Esclarecimento de dúvidas com contexto do assunto estudado (`/api/ai/ask`).
+   - Síntese inteligente e extração de conceitos-chave (`/api/ai/summarize`).
+   - Mecanismo de contingência pedagógica com respostas resilientes.
+4. **📝 Simulados Dinâmicos e Avaliação (`/api/quizzes`, `/api/questions`)**:
+   - Banco de questões de múltipla escolha com gabarito único.
+   - Geração de simulados com **10 ou 15 questões**.
+   - **Arquitetura Anti-Fraude:** ocultação rígida de respostas corretas e explicações durante a prova (`IN_PROGRESS`).
+   - Correção automática imediata pós-submissão (`COMPLETED`) com cálculo de notas (escala de 0.0 a 10.0) e gabarito comentado.
+5. **📊 Painel de Desempenho e Recomendações (`/api/performance`)**:
+   - Resumo geral de taxa de acerto acumulada e distribuição por matéria.
+   - Classificação algorítmica de maturidade dos assuntos:
+     - 🔴 **`CRITICAL`** (< 50% de acerto)
+     - 🟡 **`REGULAR`** (50% a 74.9%)
+     - 🟢 **`MASTERED`** (≥ 75%)
+   - Sugestão automática de materiais didáticos cadastrados e geração de **plano de estudos sob medida** formulado pela IA Groq.
 
 ---
 
-## 📂 Estrutura do Projeto
+## ⚡ Como Rodar o Back-end
 
-A estrutura poderá ser modificada conforme as decisões técnicas tomadas pela equipe durante o desenvolvimento.
+### Pré-requisitos
+- **Java 21** instalado (`java -version`).
+- **MySQL 8** em execução.
 
-```text
-└── LICENSE
+### Executando o Servidor:
+```bash
+# Entre na pasta do backend
+cd backend
+
+# Inicie o servidor Spring Boot
+./mvnw spring-boot:run
+```
+
+O servidor iniciará em **`http://localhost:8080`**.
+
+### Executando os 70 Testes Automatizados:
+```bash
+cd backend
+./mvnw test
 ```
 
 ---
 
-## 🔧 Tecnologias
+## 🌐 Testando a API
 
-As tecnologias definitivas serão definidas pela equipe durante a etapa de planejamento e arquitetura do projeto. Entre as tecnologias e ferramentas que poderão ser utilizadas estão:
+### 1. Pelo Navegador (Swagger UI Interativo)
+Com o back-end rodando, acesse:
+👉 **[http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)**  
+*(Ou a especificação bruta OpenAPI JSON em `http://localhost:8080/v3/api-docs`)*
 
-### 💻 Front-end
-- React
-- Next.js
-- TypeScript
-- HTML5
-- CSS
-- Tailwind CSS
-
-### ⚙️ Back-end
-- Node.js
-- NestJS (ou outro framework adequado)
-- TypeScript
-- API REST
-
-### 🗄️ Banco de Dados
-- PostgreSQL (ou outro SGBD definido pela equipe)
-
-### 🎨 Prototipação
-- Figma
-
-### 🌿 Controle de Versão
-- Git
-- GitHub
-
-### 🧠 Inteligência Artificial
-- API ou modelo de IA definido de acordo com os requisitos técnicos do projeto.
+### 2. Pelo Postman / Insomnia
+Importe com 1 clique a coleção oficial incluída na raiz do projeto:
+📂 [`TrilhaMais_API_Postman_Collection.json`](./TrilhaMais_API_Postman_Collection.json)
 
 ---
 
-## 🌿 Organização de Branches
+## 🧭 Material de Apoio e Apresentação
 
-O projeto utilizará Git e GitHub para controle de versão e colaboração entre os integrantes. A equipe poderá trabalhar com uma estrutura de branches semelhante a:
-
-```text
-main
-│
-└── develop
-    ├── feature/frontend
-    ├── feature/backend
-    ├── feature/database
-    ├── feature/ia
-    └── feature/documentation
-```
-
-As branches e convenções poderão ser adaptadas conforme a organização definida pelo Gerente de Projetos.
+- 📄 [`backend/README.md`](./backend/README.md): Documentação aprofundada da arquitetura do back-end e inventário técnico de arquivos.
+- 🎓 [`Guia_Apresentacao_Banca_UNINASSAU.md`](./Guia_Apresentacao_Banca_UNINASSAU.md): Roteiro de fala, passo a passo para a Live Demo no Swagger e banco de respostas para a banca examinadora.
 
 ---
 
-## 📌 Status do Projeto
-
-🟡 **Em desenvolvimento — Projeto Acadêmico**
-
-O projeto encontra-se em fase de planejamento e definição da arquitetura, requisitos, identidade visual, prototipação e organização da equipe. As funcionalidades serão implementadas progressivamente durante o desenvolvimento acadêmico.
-
----
-
-## ⚠️ Aviso Acadêmico
-
-Este repositório é destinado ao desenvolvimento e acompanhamento de um projeto acadêmico da **UNINASSAU — Caruaru**, realizado pelos alunos do curso de **Análise e Desenvolvimento de Sistemas — 4º Ano, Turma B**.
-
-O projeto possui finalidade educacional e acadêmica, sendo desenvolvido para aplicação prática dos conhecimentos adquiridos durante a graduação. O sistema, seus códigos, documentação e demais materiais poderão sofrer alterações durante o processo de desenvolvimento conforme as necessidades do projeto e as orientações acadêmicas.
-
----
-
-## 👨‍🏫 Orientação
-
-**Professor Antonio**  
-UNINASSAU — Caruaru/PE  
-Curso de Análise e Desenvolvimento de Sistemas  
-
-> ### 🎓 TRILHA
-> **Planeje. Estude. Pratique. Evolua.**
+*UNINASSAU Caruaru — Análise e Desenvolvimento de Sistemas | 2026*
