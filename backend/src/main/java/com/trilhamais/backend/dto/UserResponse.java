@@ -1,0 +1,45 @@
+package com.trilhamais.backend.dto;
+
+/**
+ * DTO que representa a resposta devolvida pela API apos o cadastro com sucesso.
+ * Nunca expoe senhas ou hashes para o cliente/aplicativo.
+ */
+public class UserResponse {
+
+    private Long id;
+    private String name;
+    private String email;
+
+    public UserResponse() {
+    }
+
+    public UserResponse(Long id, String name, String email) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+}
