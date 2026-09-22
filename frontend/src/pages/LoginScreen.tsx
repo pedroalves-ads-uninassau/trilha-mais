@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+
 import {
   View,
   Text,
@@ -14,6 +16,8 @@ import {
 export default function LoginScreen() {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+
+  const navigation = useNavigation<any>();
 
   const handleLogin = () => {
     console.log('Tentativa de login:', { email, password });
@@ -41,7 +45,7 @@ export default function LoginScreen() {
         <View style={styles.form}>
           <TextInput
             style={styles.input}
-            placeholder="E-mail universitário"
+            placeholder="E-mail"
             placeholderTextColor="#888"
             keyboardType="email-address"
             autoCapitalize="none"
@@ -69,7 +73,7 @@ export default function LoginScreen() {
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Ainda não tem uma conta? </Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Cadastro')}>
               <Text style={styles.registerText}>Cadastre-se</Text>
             </TouchableOpacity>
           </View>
