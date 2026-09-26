@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import SignUpScreen from './components/SignUpScreen';
-import SubjectScreen from './components/SubjectScreen';
-import QuizScreen from './components/QuizScreen';
-import ProfileScreen from './components/ProfileScreen';
+import SignUpScreen from './components/TelaCriarConta';
+import SubjectScreen from './components/TelaMateria_1';
+import QuizScreen from './components/TelaAvaliacao_1';
+import ProfileScreen from './components/TelaPerfil';
 import type { Subject, Quiz, UserProfile, SignUpFormData, Topic } from './types';
 
 type Screen = 'signup' | 'subject' | 'quiz' | 'profile';

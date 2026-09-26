@@ -1,4 +1,8 @@
-import { Materia } from "../types";
+export interface Materia {
+  id: string;
+  nome: string;
+  totalAssuntos: number;
+}
 
 export const materiasMock: Materia[] = [
   { id: "1", nome: "Matemática", totalAssuntos: 5 },

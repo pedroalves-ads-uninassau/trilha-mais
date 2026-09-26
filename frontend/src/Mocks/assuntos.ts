@@ -1,4 +1,9 @@
-import { Assunto } from "../types";
+export interface Assunto {
+  id: string;
+  materiaId: string;
+  titulo: string;
+  concluido: boolean;
+}
 
 export const assuntosMock: Assunto[] = [
   { id: "1", materiaId: "1", titulo: "Equações do 2º grau", concluido: false },
