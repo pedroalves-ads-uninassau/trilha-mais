@@ -1,0 +1,35 @@
+/* Cores tiradas do Figma "Trilha Mais Mobile App Design".
+   Valores aproximados a partir do vídeo: se o Figma tiver o hex exato
+   (Dev Mode / estilos), é só trocar aqui que todas as telas atualizam. */
+:root {
+  /* Marca */
+  --color-primary: #2563eb;          /* azul: botões, links, nav ativa */
+  --color-header-from: #1e3fae;      /* topo do cabeçalho azul */
+  --color-header-to: #2a5bdb;        /* base do cabeçalho azul */
+  --color-accent: #ec6a1a;           /* laranja: CTAs, barra do progresso geral */
+  --color-accent-dark: #d95a0c;      /* fim do degradê do botão laranja */
+
+  /* Neutros */
+  --color-background: #f8f9fc;
+  --color-surface: #ffffff;
+  --color-text: #13111b;
+  --color-text-muted: #64748b;
+  --color-border: #e2e8f0;
+  --color-track: #e2e8f0;
+
+  /* Status */
+  --color-success: #059669;          /* concluído */
+  --color-warning: #d97706;          /* destaque "continuar" */
+  --color-warning-bg: #fff7dd;
+  --color-warning-border: #f6e2a0;
+
+  /* Cores das matérias (azul, roxo, âmbar, verde) */
+  --subject-blue: #2563eb;
+  --subject-purple: #7c3aed;
+  --subject-amber: #d97706;
+  --subject-green: #059669;
+
+  --radius-large: 16px;
+  --radius-medium: 12px;
+  --font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
