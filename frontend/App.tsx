@@ -4,6 +4,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from '../frontend/src/pages/LoginScreen'; 
 import CadastroScreen from './src/pages/CadastroScreen';
 import RecuperacaoSenha from './src/pages/RecuperacaoSenha';
+import Home from './src/pages/Home';
+import Materia from './src/pages/Materia';
 
 const Stack = createNativeStackNavigator();
 
@@ -15,6 +17,8 @@ export default function AppRoutes() {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Cadastro" component={CadastroScreen} />
         <Stack.Screen name="RecuperacaoSenha" component={RecuperacaoSenha} />
+        <Stack.Screen name="Home" component={Home} />
+        <Stack.Screen name="Materia" component={Materia} />
       </Stack.Navigator>
     </NavigationContainer>
   );

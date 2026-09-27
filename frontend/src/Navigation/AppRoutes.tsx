@@ -2,7 +2,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Login from "../pages/Login";
 import Home from "../pages/Home";
-import Materias from "../pages/Materias";
+import Materias from "../pages/Materia";
 import Assuntos from "../pages/Assuntos";
 import Chat from "../pages/Chat";
 import Avaliacao from "../pages/Avaliacao";
