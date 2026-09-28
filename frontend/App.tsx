@@ -6,6 +6,7 @@ import CadastroScreen from './src/pages/CadastroScreen';
 import RecuperacaoSenha from './src/pages/RecuperacaoSenha';
 import Home from './src/pages/Home';
 import Materia from './src/pages/Materia';
+import Assuntos from './src/pages/Assuntos';
 
 const Stack = createNativeStackNavigator();
 
@@ -19,6 +20,7 @@ export default function AppRoutes() {
         <Stack.Screen name="RecuperacaoSenha" component={RecuperacaoSenha} />
         <Stack.Screen name="Home" component={Home} />
         <Stack.Screen name="Materia" component={Materia} />
+        <Stack.Screen name="Assuntos" component={Assuntos} />
       </Stack.Navigator>
     </NavigationContainer>
   );

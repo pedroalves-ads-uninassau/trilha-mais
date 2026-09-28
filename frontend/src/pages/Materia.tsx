@@ -31,7 +31,7 @@ export interface MateriaParams {
 }
 
 export default function Materia() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const route = useRoute();
   
   // Recebe os dados da matéria passados pela navegação
@@ -119,7 +119,17 @@ export default function Materia() {
             const config = getStatusConfig(assunto.status);
             
             return (
-              <TouchableOpacity key={assunto.id} style={styles.assuntoCard} activeOpacity={0.7}>
+              <TouchableOpacity 
+                key={assunto.id} 
+                style={styles.assuntoCard} 
+                activeOpacity={0.7}
+                onPress={() => 
+                  navigation.navigate('Assuntos', {
+                    titulo: assunto.titulo,
+                    materiaNome: materia.nome,
+                  })
+                }
+              >
                 <View style={[styles.assuntoIconeBase, { borderColor: config.cor }]}>
                   <Text style={{ color: config.cor, fontSize: 16, fontWeight: 'bold' }}>
                     {config.icone}
