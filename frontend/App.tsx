@@ -5,6 +5,7 @@ import LoginScreen from '../frontend/src/pages/LoginScreen';
 import CadastroScreen from './src/pages/CadastroScreen';
 import RecuperacaoSenha from './src/pages/RecuperacaoSenha';
 import Home from './src/pages/Home';
+import Agenda from './src/pages/Agenda';
 import Materias from './src/pages/Materias';
 import Materia from './src/pages/Materia';
 import Assuntos from './src/pages/Assuntos';
@@ -22,6 +23,7 @@ export default function AppRoutes() {
         <Stack.Screen name="Cadastro" component={CadastroScreen} />
         <Stack.Screen name="RecuperacaoSenha" component={RecuperacaoSenha} />
         <Stack.Screen name="Home" component={Home} />
+        <Stack.Screen name="Agenda" component={Agenda} />
         <Stack.Screen name="Materias" component={Materias} />
         <Stack.Screen name="Materia" component={Materia} />
         <Stack.Screen name="Assuntos" component={Assuntos} />

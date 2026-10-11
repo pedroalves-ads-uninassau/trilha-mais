@@ -38,6 +38,9 @@ export default function Home() {
 
   // Função para a mudança na Barra de Navegação
   const aoMudarAba = (novaAba: ChaveAba) => {
+    if (novaAba === 'agenda') {
+      navigation.navigate('Agenda');
+    }
     if (novaAba === 'perfil') {
       navigation.navigate('Perfil');
     }

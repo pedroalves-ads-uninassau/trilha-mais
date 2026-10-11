@@ -38,6 +38,7 @@ export default function Materias() {
 
   const aoMudarAba = (novaAba: ChaveAba) => {
     if (novaAba === 'inicio') navigation.navigate('Home');
+    if (novaAba === 'agenda') navigation.navigate('Agenda');
     if (novaAba === 'progresso') navigation.navigate('Progresso');
     if (novaAba === 'perfil') navigation.navigate('Perfil');
   };
