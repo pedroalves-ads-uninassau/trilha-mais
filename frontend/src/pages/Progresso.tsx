@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -19,14 +19,12 @@ const desempenhoMaterias = [
 ];
 
 export default function Progresso() {
-  const [abaAtiva, setAbaAtiva] = useState<ChaveAba>('progresso');
   const navigation = useNavigation<any>();
 
   const aoMudarAba = (novaAba: ChaveAba) => {
-    setAbaAtiva(novaAba);
     if (novaAba === 'inicio') navigation.navigate('Home');
+    if (novaAba === 'materias') navigation.navigate('Materias');
     if (novaAba === 'perfil') navigation.navigate('Perfil');
-    // Adicione outras rotas conforme necessário (Agenda, Matérias)
   };
 
   return (
@@ -113,7 +111,7 @@ export default function Progresso() {
       </ScrollView>
 
       {/* Barra de Navegação Inferior */}
-      <BarraNavegacao ativa={abaAtiva} aoMudar={aoMudarAba} />
+      <BarraNavegacao ativa="progresso" aoMudar={aoMudarAba} />
     </SafeAreaView>
   );
 }

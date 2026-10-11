@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -34,15 +34,15 @@ const iconesEstatisticas: Record<string, string> = {
 const textoHeaderSuave = 'rgba(255,255,255,0.85)';
 
 export default function Home() {
-  const [abaAtiva, setAbaAtiva] = useState<ChaveAba>('inicio');
-  
   const navigation = useNavigation<any>();
 
   // Função para a mudança na Barra de Navegação
   const aoMudarAba = (novaAba: ChaveAba) => {
-    setAbaAtiva(novaAba);
     if (novaAba === 'perfil') {
       navigation.navigate('Perfil');
+    }
+    if (novaAba === 'materias') {
+      navigation.navigate('Materias');
     }
     if (novaAba === 'progresso') {
       navigation.navigate('Progresso');
@@ -105,7 +105,10 @@ export default function Home() {
           {/* Minhas matérias */}
           <View style={styles.linhaTituloSecao}>
             <Text style={styles.tituloSecao}>Minhas matérias</Text>
-            <TouchableOpacity activeOpacity={0.7}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('Materias')}
+            >
               <Text style={styles.linkSecao}>Ver todas</Text>
             </TouchableOpacity>
           </View>
@@ -132,7 +135,7 @@ export default function Home() {
         </View>
       </ScrollView>
 
-      <BarraNavegacao ativa={abaAtiva} aoMudar={aoMudarAba} />
+      <BarraNavegacao ativa="inicio" aoMudar={aoMudarAba} />
     </SafeAreaView>
   );
 }
