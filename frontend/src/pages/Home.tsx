@@ -38,6 +38,14 @@ export default function Home() {
   
   const navigation = useNavigation<any>();
 
+  // Função para a mudança na Barra de Navegação
+  const aoMudarAba = (novaAba: ChaveAba) => {
+    setAbaAtiva(novaAba);
+    if (novaAba === 'perfil') {
+      navigation.navigate('Perfil');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.areaSegura}>
       <StatusBar barStyle="light-content" />
@@ -57,7 +65,11 @@ export default function Home() {
               </Text>
             </View>
 
-            <TouchableOpacity style={styles.botaoAvatar} activeOpacity={0.8}>
+            <TouchableOpacity 
+              style={styles.botaoAvatar} 
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate('Perfil')}
+            >
               <Text style={styles.emojiAvatar}>🎓</Text>
             </TouchableOpacity>
           </View>
@@ -117,7 +129,7 @@ export default function Home() {
         </View>
       </ScrollView>
 
-      <BarraNavegacao ativa={abaAtiva} aoMudar={setAbaAtiva} />
+      <BarraNavegacao ativa={abaAtiva} aoMudar={aoMudarAba} />
     </SafeAreaView>
   );
 }

@@ -7,6 +7,7 @@ import RecuperacaoSenha from './src/pages/RecuperacaoSenha';
 import Home from './src/pages/Home';
 import Materia from './src/pages/Materia';
 import Assuntos from './src/pages/Assuntos';
+import Perfil from './src/pages/Perfil';
 
 const Stack = createNativeStackNavigator();
 
@@ -21,6 +22,7 @@ export default function AppRoutes() {
         <Stack.Screen name="Home" component={Home} />
         <Stack.Screen name="Materia" component={Materia} />
         <Stack.Screen name="Assuntos" component={Assuntos} />
+        <Stack.Screen name="Perfil" component={Perfil} />
       </Stack.Navigator>
     </NavigationContainer>
   );
