@@ -44,6 +44,9 @@ export default function Home() {
     if (novaAba === 'perfil') {
       navigation.navigate('Perfil');
     }
+    if (novaAba === 'progresso') {
+      navigation.navigate('Progresso');
+    }
   };
 
   return (
