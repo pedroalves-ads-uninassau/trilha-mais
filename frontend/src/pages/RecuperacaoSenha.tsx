@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     justifyContent: 'center',
-    paddingBottom: 100, // Eleva um pouco o formulário para melhor visualização com o teclado
+    paddingBottom: 100,
   },
   title: {
     fontSize: 32,
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   button: {
-    backgroundColor: '#4299E1', // Mesma cor do botão de Login
+    backgroundColor: '#4299E1',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
