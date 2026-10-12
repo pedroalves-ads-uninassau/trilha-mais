@@ -1,3 +1,4 @@
+declare const process: { env: Record<string, string | undefined> };
 // Serviço de chat com a Groq (API compatível com OpenAI).
 // Docs: https://console.groq.com/docs/api-reference
 
