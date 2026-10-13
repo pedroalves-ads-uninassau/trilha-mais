@@ -35,7 +35,12 @@ public class TopicService {
         Subject subject = subjectRepository.findByIdAndUserId(subjectId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Matéria não encontrada com o id: " + subjectId));
 
-        Topic topic = new Topic(request.getName().trim(), request.getDescription(), subject);
+        Topic topic = new Topic(
+                request.getName().trim(),
+                request.getDescription(),
+                request.getStatus() != null ? request.getStatus() : "pendente",
+                subject
+        );
         Topic saved = topicRepository.save(topic);
 
         return toTopicResponse(saved);
@@ -46,7 +51,6 @@ public class TopicService {
      */
     @Transactional(readOnly = true)
     public List<TopicResponse> getTopicsBySubject(Long subjectId, User user) {
-        // Valida se a materia existe e pertence ao usuario
         subjectRepository.findByIdAndUserId(subjectId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Matéria não encontrada com o id: " + subjectId));
 
@@ -77,8 +81,24 @@ public class TopicService {
 
         topic.setName(request.getName().trim());
         topic.setDescription(request.getDescription());
+        if (request.getStatus() != null) {
+            topic.setStatus(request.getStatus());
+        }
         Topic updated = topicRepository.save(topic);
 
+        return toTopicResponse(updated);
+    }
+
+    /**
+     * Atualiza diretamente o status do assunto (ex: concluido, andamento, pendente).
+     */
+    @Transactional
+    public TopicResponse updateStatus(Long topicId, String status, User user) {
+        Topic topic = topicRepository.findByIdAndSubjectUserId(topicId, user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Assunto não encontrado com o id: " + topicId));
+
+        topic.setStatus(status.trim().toLowerCase());
+        Topic updated = topicRepository.save(topic);
         return toTopicResponse(updated);
     }
 
@@ -98,6 +118,7 @@ public class TopicService {
                 topic.getId(),
                 topic.getName(),
                 topic.getDescription(),
+                topic.getStatus(),
                 topic.getSubject().getId(),
                 topic.getSubject().getName(),
                 topic.getCreatedAt()

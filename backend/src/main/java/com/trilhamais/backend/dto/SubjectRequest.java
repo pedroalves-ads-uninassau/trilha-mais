@@ -15,12 +15,24 @@ public class SubjectRequest {
     @Size(max = 1000, message = "A descrição deve ter no máximo 1000 caracteres.")
     private String description;
 
+    private String colorKey;
+    private String primaryColor;
+    private String icon;
+
     public SubjectRequest() {
     }
 
     public SubjectRequest(String name, String description) {
         this.name = name;
         this.description = description;
+    }
+
+    public SubjectRequest(String name, String description, String colorKey, String primaryColor, String icon) {
+        this.name = name;
+        this.description = description;
+        this.colorKey = colorKey;
+        this.primaryColor = primaryColor;
+        this.icon = icon;
     }
 
     public String getName() {
@@ -37,5 +49,29 @@ public class SubjectRequest {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getColorKey() {
+        return colorKey;
+    }
+
+    public void setColorKey(String colorKey) {
+        this.colorKey = colorKey;
+    }
+
+    public String getPrimaryColor() {
+        return primaryColor;
+    }
+
+    public void setPrimaryColor(String primaryColor) {
+        this.primaryColor = primaryColor;
+    }
+
+    public String getIcon() {
+        return icon;
+    }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
     }
 }

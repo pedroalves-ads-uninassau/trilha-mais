@@ -76,6 +76,19 @@ public class TopicController {
     }
 
     /**
+     * Atualiza o status do assunto (concluido, andamento, pendente).
+     * PATCH /api/topics/{id}/status
+     */
+    @PatchMapping("/api/topics/{id}/status")
+    public ResponseEntity<TopicResponse> updateStatus(
+            @PathVariable Long id,
+            @RequestParam String status,
+            @AuthenticationPrincipal User user) {
+        TopicResponse response = topicService.updateStatus(id, status, user);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Remove um assunto especifico.
      * DELETE /api/topics/{id}
      */

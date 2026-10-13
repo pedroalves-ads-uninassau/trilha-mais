@@ -1,6 +1,7 @@
 package com.trilhamais.backend.dto;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class QuizResultResponse {
@@ -13,7 +14,9 @@ public class QuizResultResponse {
     private double score;
     private double percentage;
     private LocalDateTime completedAt;
-    private List<QuizCorrectionItemResponse> results;
+    private List<QuizCorrectionItemResponse> results = new ArrayList<>();
+    private List<String> fortes = new ArrayList<>();
+    private List<String> fracos = new ArrayList<>();
 
     public QuizResultResponse() {
     }
@@ -29,7 +32,23 @@ public class QuizResultResponse {
         this.score = score;
         this.percentage = percentage;
         this.completedAt = completedAt;
-        this.results = results;
+        this.results = results != null ? results : new ArrayList<>();
+    }
+
+    public QuizResultResponse(Long quizId, String title, String status, int totalQuestions, int correctAnswers,
+                              double score, double percentage, LocalDateTime completedAt,
+                              List<QuizCorrectionItemResponse> results, List<String> fortes, List<String> fracos) {
+        this.quizId = quizId;
+        this.title = title;
+        this.status = status;
+        this.totalQuestions = totalQuestions;
+        this.correctAnswers = correctAnswers;
+        this.score = score;
+        this.percentage = percentage;
+        this.completedAt = completedAt;
+        this.results = results != null ? results : new ArrayList<>();
+        this.fortes = fortes != null ? fortes : new ArrayList<>();
+        this.fracos = fracos != null ? fracos : new ArrayList<>();
     }
 
     public Long getQuizId() {
@@ -102,5 +121,21 @@ public class QuizResultResponse {
 
     public void setResults(List<QuizCorrectionItemResponse> results) {
         this.results = results;
+    }
+
+    public List<String> getFortes() {
+        return fortes;
+    }
+
+    public void setFortes(List<String> fortes) {
+        this.fortes = fortes;
+    }
+
+    public List<String> getFracos() {
+        return fracos;
+    }
+
+    public void setFracos(List<String> fracos) {
+        this.fracos = fracos;
     }
 }

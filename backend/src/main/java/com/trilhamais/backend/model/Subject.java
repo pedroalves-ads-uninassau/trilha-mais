@@ -26,6 +26,15 @@ public class Subject {
     @Column(length = 1000)
     private String description;
 
+    @Column(name = "color_key", length = 50)
+    private String colorKey;
+
+    @Column(name = "primary_color", length = 20)
+    private String primaryColor;
+
+    @Column(name = "icon", length = 20)
+    private String icon;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -42,6 +51,15 @@ public class Subject {
     public Subject(String name, String description, User user) {
         this.name = name;
         this.description = description;
+        this.user = user;
+    }
+
+    public Subject(String name, String description, String colorKey, String primaryColor, String icon, User user) {
+        this.name = name;
+        this.description = description;
+        this.colorKey = colorKey;
+        this.primaryColor = primaryColor;
+        this.icon = icon;
         this.user = user;
     }
 
@@ -74,6 +92,30 @@ public class Subject {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getColorKey() {
+        return colorKey;
+    }
+
+    public void setColorKey(String colorKey) {
+        this.colorKey = colorKey;
+    }
+
+    public String getPrimaryColor() {
+        return primaryColor;
+    }
+
+    public void setPrimaryColor(String primaryColor) {
+        this.primaryColor = primaryColor;
+    }
+
+    public String getIcon() {
+        return icon;
+    }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
     }
 
     public User getUser() {

@@ -22,7 +22,7 @@ public class StudyMaterial {
     private String title;
 
     @NotBlank(message = "O conteúdo do material é obrigatório.")
-    @Column(columnDefinition = "LONGTEXT", nullable = false)
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
     @Enumerated(EnumType.STRING)

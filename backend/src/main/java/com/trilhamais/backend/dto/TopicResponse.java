@@ -3,13 +3,14 @@ package com.trilhamais.backend.dto;
 import java.time.LocalDateTime;
 
 /**
- * DTO para exibicao de informacoes de um Assunto (Topic).
+ * DTO para exibicao de informacoes de um Assunto (Topic) incluindo status de progresso.
  */
 public class TopicResponse {
 
     private Long id;
     private String name;
     private String description;
+    private String status;
     private Long subjectId;
     private String subjectName;
     private LocalDateTime createdAt;
@@ -17,10 +18,11 @@ public class TopicResponse {
     public TopicResponse() {
     }
 
-    public TopicResponse(Long id, String name, String description, Long subjectId, String subjectName, LocalDateTime createdAt) {
+    public TopicResponse(Long id, String name, String description, String status, Long subjectId, String subjectName, LocalDateTime createdAt) {
         this.id = id;
         this.name = name;
         this.description = description;
+        this.status = status != null ? status : "pendente";
         this.subjectId = subjectId;
         this.subjectName = subjectName;
         this.createdAt = createdAt;
@@ -48,6 +50,14 @@ public class TopicResponse {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public Long getSubjectId() {

@@ -30,6 +30,12 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(name = "streak_days", nullable = false)
+    private int streakDays = 0;
+
+    @Column(name = "avatar_emoji", length = 20)
+    private String avatarEmoji = "🎓";
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private java.util.List<Subject> subjects = new java.util.ArrayList<>();
 
@@ -75,6 +81,22 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public int getStreakDays() {
+        return streakDays;
+    }
+
+    public void setStreakDays(int streakDays) {
+        this.streakDays = streakDays;
+    }
+
+    public String getAvatarEmoji() {
+        return avatarEmoji;
+    }
+
+    public void setAvatarEmoji(String avatarEmoji) {
+        this.avatarEmoji = avatarEmoji;
     }
 
     public java.util.List<Subject> getSubjects() {

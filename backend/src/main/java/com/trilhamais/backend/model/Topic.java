@@ -24,6 +24,9 @@ public class Topic {
     @Column(length = 1000)
     private String description;
 
+    @Column(name = "status", length = 30, nullable = false)
+    private String status = "pendente";
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_id", nullable = false)
     private Subject subject;
@@ -43,6 +46,14 @@ public class Topic {
     public Topic(String name, String description, Subject subject) {
         this.name = name;
         this.description = description;
+        this.subject = subject;
+        this.status = "pendente";
+    }
+
+    public Topic(String name, String description, String status, Subject subject) {
+        this.name = name;
+        this.description = description;
+        this.status = status != null ? status : "pendente";
         this.subject = subject;
     }
 
@@ -75,6 +86,14 @@ public class Topic {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public Subject getSubject() {

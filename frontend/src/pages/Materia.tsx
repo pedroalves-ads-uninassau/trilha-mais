@@ -34,8 +34,20 @@ export default function Materia() {
   const navigation = useNavigation<any>();
   const route = useRoute();
   
-  // Recebe os dados da matéria passados pela navegação
-  const materia = route.params as MateriaParams;
+  // Recebe os dados da matéria passados pela navegação com fallback seguro
+  const dados = (route.params as MateriaParams) || {};
+  const materia: MateriaParams = {
+    id: dados.id || '1',
+    nome: dados.nome || 'Matéria',
+    corPrimaria: dados.corPrimaria || '#2563EB',
+    icone: dados.icone || '📘',
+    assuntosTotal: dados.assuntosTotal || (dados.assuntosLista?.length ?? 0),
+    concluidos: dados.concluidos || 0,
+    emAndamento: dados.emAndamento || 0,
+    pendentes: dados.pendentes || 0,
+    progresso: dados.progresso || 0,
+    assuntosLista: dados.assuntosLista || [],
+  };
 
   // Função auxiliar para renderizar o ícone e cor do status do assunto
   const getStatusConfig = (status: string) => {

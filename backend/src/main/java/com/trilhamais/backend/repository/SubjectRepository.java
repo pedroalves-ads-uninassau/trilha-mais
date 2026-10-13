@@ -21,4 +21,6 @@ public interface SubjectRepository extends JpaRepository<Subject, Long> {
     boolean existsByNameIgnoreCaseAndUserId(String name, Long userId);
 
     boolean existsByNameIgnoreCaseAndUserIdAndIdNot(String name, Long userId, Long id);
+
+    long countByUserId(Long userId);
 }

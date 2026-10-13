@@ -1,8 +1,8 @@
 {
   "info": {
     "name": "Trilha+ API — Coleção Postman Oficial (UNINASSAU)",
-    "_postman_id": "trilhamais-api-v1",
-    "description": "Coleção completa e organizada de endpoints do Back-end Trilha+ (Spring Boot 4 / Java 21) para integração com o Front-end React Native e homologação acadêmica.",
+    "_postman_id": "trilhamais-api-v2",
+    "description": "Coleção completa, atualizada e organizada de endpoints do Back-end Trilha+ (Spring Boot 3 / Java 21 / PostgreSQL) alinhada com o Front-end React Native e homologação acadêmica da UNINASSAU.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -98,7 +98,29 @@
       ]
     },
     {
-      "name": "02. Matérias",
+      "name": "02. Dashboard & Visão Geral",
+      "item": [
+        {
+          "name": "Obter Dashboard Consolidado (Home)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03. Matérias",
       "item": [
         {
           "name": "Listar Matérias do Estudante",
@@ -118,7 +140,7 @@
           }
         },
         {
-          "name": "Criar Nova Matéria",
+          "name": "Criar Nova Matéria (com tema visual)",
           "request": {
             "method": "POST",
             "header": [
@@ -133,7 +155,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Estrutura de Dados\",\n  \"description\": \"Algoritmos, listas, filas, pilhas e árvores\"\n}"
+              "raw": "{\n  \"name\": \"Português & Redação\",\n  \"description\": \"Gramática, interpretação de texto e redação para o ENEM\",\n  \"colorKey\": \"portugues\",\n  \"primaryColor\": \"#2563EB\",\n  \"icon\": \"📘\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/subjects",
@@ -141,11 +163,45 @@
               "path": ["api", "subjects"]
             }
           }
+        },
+        {
+          "name": "Consultar Detalhes da Matéria e Assuntos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/subjects/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "subjects", "1"]
+            }
+          }
+        },
+        {
+          "name": "Excluir Matéria",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/subjects/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "subjects", "1"]
+            }
+          }
         }
       ]
     },
     {
-      "name": "03. Assuntos / Tópicos",
+      "name": "04. Assuntos / Tópicos",
       "item": [
         {
           "name": "Criar Tópico para a Matéria",
@@ -163,7 +219,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Árvores Binárias de Busca\",\n  \"description\": \"Inserção, busca e balanceamento AVL\"\n}"
+              "raw": "{\n  \"name\": \"Figuras de Linguagem\",\n  \"description\": \"Metáfora, metonímia, antítese e paradoxo\",\n  \"status\": \"pendente\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/subjects/1/topics",
@@ -188,12 +244,176 @@
               "path": ["api", "subjects", "1", "topics"]
             }
           }
+        },
+        {
+          "name": "Consultar Detalhes de um Tópico",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/topics/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "topics", "1"]
+            }
+          }
+        },
+        {
+          "name": "Atualizar Status do Assunto (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/topics/1/status?status=concluido",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "topics", "1", "status"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "concluido",
+                  "description": "Valores aceitos: 'pendente', 'andamento', 'concluido'"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Excluir Tópico",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/topics/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "topics", "1"]
+            }
+          }
         }
       ]
     },
     {
-      "name": "04. Tutor de IA (Groq Cloud)",
+      "name": "05. Agenda & Cronograma de Estudos",
       "item": [
+        {
+          "name": "Listar Compromissos de Estudo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/schedules",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "schedules"]
+            }
+          }
+        },
+        {
+          "name": "Adicionar Novo Compromisso de Estudo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Revolução Industrial & Iluminismo\",\n  \"subjectName\": \"História\",\n  \"colorKey\": \"historia\",\n  \"icon\": \"📖\",\n  \"daysAhead\": 0,\n  \"scheduledTime\": \"14:30\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/schedules",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "schedules"]
+            }
+          }
+        },
+        {
+          "name": "Alternar Conclusão do Compromisso (Toggle)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/schedules/1/toggle",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "schedules", "1", "toggle"]
+            }
+          }
+        },
+        {
+          "name": "Excluir Compromisso da Agenda",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/schedules/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "schedules", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "06. Tutor de IA (Groq Cloud)",
+      "item": [
+        {
+          "name": "Chat Conversacional Interativo (/api/ai/chat)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Olá! Pode me dar 3 exemplos práticos de metáfora e metonímia em redações do ENEM?\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "chat"]
+            }
+          }
+        },
         {
           "name": "Tirar Dúvida com IA (/api/ai/ask)",
           "request": {
@@ -247,7 +467,7 @@
       ]
     },
     {
-      "name": "05. Simulados & Quiz",
+      "name": "07. Simulados & Quiz",
       "item": [
         {
           "name": "Gerar Simulado Dinâmico (10 questões)",
@@ -265,7 +485,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Simulado de Revisão — Árvores\",\n  \"topicId\": 1,\n  \"questionCount\": 10\n}"
+              "raw": "{\n  \"title\": \"Simulado de Revisão — Figuras de Linguagem\",\n  \"topicId\": 1,\n  \"questionCount\": 10\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/quizzes/generate",
@@ -275,7 +495,7 @@
           }
         },
         {
-          "name": "Submeter Respostas e Receber Nota",
+          "name": "Submeter Respostas e Receber Nota (com pontos fortes/fracos)",
           "request": {
             "method": "POST",
             "header": [
@@ -315,11 +535,28 @@
               "path": ["api", "quizzes"]
             }
           }
+        },
+        {
+          "name": "Consultar Simulado por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/quizzes/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "quizzes", "1"]
+            }
+          }
         }
       ]
     },
     {
-      "name": "06. Resultados & Desempenho",
+      "name": "08. Resultados & Desempenho",
       "item": [
         {
           "name": "Resumo Geral de Performance",

@@ -240,4 +240,64 @@ public class GroqAiService {
     public String getProviderName() {
         return isGroqConfigured() ? "Groq Cloud (" + model + ")" : "Contingência Pedagógica Trilha+";
     }
+
+    public String chat(List<com.trilhamais.backend.dto.AiChatMessageDto> messageDtos) {
+        String systemPrompt = "Você é o assistente de estudos do app Trilha+. Responda sempre em português do Brasil, " +
+                "de forma clara, didática e objetiva, com exemplos curtos quando ajudar. " +
+                "Se a pergunta não for sobre estudos, responda brevemente e traga a conversa de volta aos estudos.";
+
+        if (isGroqConfigured()) {
+            try {
+                Map<String, Object> bodyMap = new HashMap<>();
+                bodyMap.put("model", model);
+                bodyMap.put("temperature", 0.6);
+                bodyMap.put("max_tokens", 800);
+
+                List<Map<String, String>> messages = new ArrayList<>();
+                messages.add(Map.of("role", "system", "content", systemPrompt));
+
+                if (messageDtos != null) {
+                    for (com.trilhamais.backend.dto.AiChatMessageDto msg : messageDtos) {
+                        String role = msg.getRole() != null ? msg.getRole() : "user";
+                        String content = msg.getContent() != null ? msg.getContent() : "";
+                        messages.add(Map.of("role", role, "content", content));
+                    }
+                }
+                bodyMap.put("messages", messages);
+
+                String jsonPayload = objectMapper.writeValueAsString(bodyMap);
+
+                HttpRequest httpRequest = HttpRequest.newBuilder()
+                        .uri(URI.create(apiUrl))
+                        .header("Authorization", "Bearer " + apiKey)
+                        .header("Content-Type", "application/json")
+                        .timeout(Duration.ofSeconds(20))
+                        .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                        .build();
+
+                HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+                if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                    JsonNode root = objectMapper.readTree(response.body());
+                    JsonNode contentNode = root.path("choices").path(0).path("message").path("content");
+                    if (!contentNode.isMissingNode()) {
+                        return contentNode.asText().trim();
+                    }
+                }
+                log.warn("Erro status Groq: {} body: {}", response.statusCode(), response.body());
+            } catch (Exception e) {
+                log.warn("Falha no chat Groq: {}", e.getMessage());
+            }
+        }
+
+        // Resposta de contingência pedagógica quando a chave da Groq não estiver presente
+        String lastQuestion = "";
+        if (messageDtos != null && !messageDtos.isEmpty()) {
+            lastQuestion = messageDtos.get(messageDtos.size() - 1).getContent();
+        }
+        return "Olá! Sou o Assistente de Estudos Trilha+.\n\n" +
+                "Para sua dúvida sobre \"" + (lastQuestion.isBlank() ? "seus estudos" : lastQuestion) + "\": " +
+                "organize seus tópicos em teoria, mapas mentais e resolução de questões diárias. " +
+                "Configure a chave da Groq em application.properties para respostas analíticas aprofundadas em tempo real!";
+    }
 }

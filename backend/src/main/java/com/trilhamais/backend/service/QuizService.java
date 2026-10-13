@@ -179,6 +179,19 @@ public class QuizService {
         quiz.setCompletedAt(LocalDateTime.now());
         quizRepository.save(quiz);
 
+        Map<String, Boolean> topicMap = new HashMap<>();
+        for (QuizQuestion qq : quizQuestions) {
+            String topicName = qq.getQuestion().getTopic() != null ? qq.getQuestion().getTopic().getName() : null;
+            if (topicName != null) {
+                Long qId = qq.getQuestion().getId();
+                Long selId = submissionMap.get(qId);
+                boolean ok = selId != null && qq.getQuestion().getOptions().stream().anyMatch(o -> o.getId().equals(selId) && o.isCorrect());
+                topicMap.put(topicName, topicMap.getOrDefault(topicName, true) && ok);
+            }
+        }
+        List<String> fortes = topicMap.entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey).toList();
+        List<String> fracos = topicMap.entrySet().stream().filter(e -> !e.getValue()).map(Map.Entry::getKey).toList();
+
         return new QuizResultResponse(
                 quiz.getId(),
                 quiz.getTitle(),
@@ -188,7 +201,9 @@ public class QuizService {
                 roundedScore,
                 percentage,
                 quiz.getCompletedAt(),
-                results
+                results,
+                fortes,
+                fracos
         );
     }
 
@@ -207,6 +222,8 @@ public class QuizService {
                 .collect(Collectors.toMap(a -> a.getQuestion().getId(), a -> a, (a1, a2) -> a1));
 
         List<QuizCorrectionItemResponse> results = new ArrayList<>();
+        Map<String, Boolean> topicMap = new HashMap<>();
+
         for (QuizQuestion qq : quizQuestions) {
             Question question = qq.getQuestion();
             QuizAnswer answer = answerMap.get(question.getId());
@@ -219,6 +236,11 @@ public class QuizService {
             QuestionOption selectedOption = answer != null ? answer.getSelectedOption() : null;
             boolean isCorrect = answer != null && answer.isCorrect();
 
+            String topicName = question.getTopic() != null ? question.getTopic().getName() : null;
+            if (topicName != null) {
+                topicMap.put(topicName, topicMap.getOrDefault(topicName, true) && isCorrect);
+            }
+
             results.add(new QuizCorrectionItemResponse(
                     question.getId(),
                     question.getText(),
@@ -230,6 +252,9 @@ public class QuizService {
                     question.getExplanation()
             ));
         }
+
+        List<String> fortes = topicMap.entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey).toList();
+        List<String> fracos = topicMap.entrySet().stream().filter(e -> !e.getValue()).map(Map.Entry::getKey).toList();
 
         int total = quiz.getTotalQuestions();
         int correctCount = quiz.getCorrectAnswers() != null ? quiz.getCorrectAnswers() : 0;
@@ -245,7 +270,9 @@ public class QuizService {
                 score,
                 percentage,
                 quiz.getCompletedAt(),
-                results
+                results,
+                fortes,
+                fracos
         );
     }
 

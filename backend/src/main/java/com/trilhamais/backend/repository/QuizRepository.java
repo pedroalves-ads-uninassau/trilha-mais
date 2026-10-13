@@ -16,4 +16,8 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
     Optional<Quiz> findByIdAndUserId(Long id, Long userId);
 
     List<Quiz> findByUserIdAndStatusOrderByCompletedAtDesc(Long userId, QuizStatus status);
+
+    long countByUserIdAndStatus(Long userId, QuizStatus status);
+
+    long countByUserId(Long userId);
 }

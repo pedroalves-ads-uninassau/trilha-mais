@@ -15,12 +15,21 @@ public class TopicRequest {
     @Size(max = 1000, message = "A descrição deve ter no máximo 1000 caracteres.")
     private String description;
 
+    private String status = "pendente";
+
     public TopicRequest() {
     }
 
     public TopicRequest(String name, String description) {
         this.name = name;
         this.description = description;
+        this.status = "pendente";
+    }
+
+    public TopicRequest(String name, String description, String status) {
+        this.name = name;
+        this.description = description;
+        this.status = status != null ? status : "pendente";
     }
 
     public String getName() {
@@ -37,5 +46,13 @@ public class TopicRequest {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

@@ -14,11 +14,11 @@ public class Question {
     private Long id;
 
     @Lob
-    @Column(name = "text", nullable = false, columnDefinition = "LONGTEXT")
+    @Column(name = "text", nullable = false, columnDefinition = "TEXT")
     private String text;
 
     @Lob
-    @Column(name = "explanation", columnDefinition = "LONGTEXT")
+    @Column(name = "explanation", columnDefinition = "TEXT")
     private String explanation;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -51,4 +51,16 @@ public class AiController {
         AiSummarizeResponse response = groqAiService.summarize(request, user);
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * Chat conversacional interativo com a IA com histórico de mensagens.
+     * POST /api/ai/chat
+     */
+    @PostMapping("/chat")
+    public ResponseEntity<com.trilhamais.backend.dto.AiChatResponse> chat(
+            @Valid @RequestBody com.trilhamais.backend.dto.AiChatRequest request,
+            @AuthenticationPrincipal User user) {
+        String reply = groqAiService.chat(request.getMessages());
+        return ResponseEntity.ok(new com.trilhamais.backend.dto.AiChatResponse(reply));
+    }
 }
