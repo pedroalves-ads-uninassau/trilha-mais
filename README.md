@@ -5,9 +5,9 @@
 > **Disciplina:** Laboratório de Empreendimentos Inovadores | 4º Período  
 > **Orientador:** Professor Antonio
 
-O **TRILHA+** é uma solução educacional móvel e web desenvolvida como projeto acadêmico interdisciplinar para auxiliar estudantes universitários no planejamento, organização e acompanhamento contínuo da sua rotina de estudos. A plataforma centraliza em uma única experiência intuitiva: **gestão de matérias e tópicos, materiais didáticos, tutoria inteligente com IA Generativa (Groq Cloud / Llama 3.3 70B), simulados avaliativos dinâmicos com proteção anti-fraude e diagnóstico analítico de desempenho acadêmico**.
+O **TRILHA+** é uma solução educacional móvel desenvolvida como projeto acadêmico interdisciplinar para auxiliar estudantes universitários no planejamento, organização e acompanhamento contínuo da sua rotina de estudos. A plataforma centraliza em uma única experiência intuitiva: **gestão de matérias e assuntos com indicadores visuais, cronograma de estudos com agenda integrada, dashboard consolidado de desempenho, tutoria inteligente com IA Generativa multi-turn (Groq Cloud / Llama 3.3 70B), simulados avaliativos dinâmicos com proteção anti-fraude e diagnóstico detalhado de pontos fortes e fracos**.
 
-O projeto aplica na prática conceitos avançados de **Engenharia de Software, Arquitetura de Software em Camadas, Desenvolvimento Mobile com React Native, Segurança e Autenticação JWT, Inteligência Artificial Aplicada, Modelagem de Bancos de Dados Relacionais e Testes Automatizados**.
+O projeto aplica na prática conceitos avançados de **Engenharia de Software, Arquitetura de Software em Camadas, Desenvolvimento Mobile com React Native e Expo, Segurança e Autenticação JWT Stateless, Inteligência Artificial Aplicada, Modelagem de Bancos de Dados Relacionais em PostgreSQL e Testes Automatizados**.
 
 ---
 
@@ -25,12 +25,13 @@ O projeto aplica na prática conceitos avançados de **Engenharia de Software, A
 
 ## 🎯 Objetivo e Proposta de Valor
 
-O objetivo central do **TRILHA+** é combater a desorganização e a sobrecarga de conteúdos vivenciadas por estudantes universitários e concurseiros, estruturando os estudos em torno da **Jornada Contínua de Aprendizagem**:
+O objetivo central do **TRILHA+** é combater a procrastinação, a desorganização e a sobrecarga de conteúdos vivenciadas por estudantes universitários e concurseiros, estruturando os estudos em torno da **Jornada Contínua de Aprendizagem**:
 
 ```text
 ┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
 │  Onde estou  │ ──> │ O que estudar│ ──> │ Como estudar │ ──> │ Como estou   │ ──> │ O que devo   │
-│ (Diagnóstico)│     │  (Matérias)  │     │ (Resumos/IA) │     │  evoluindo   │     │   melhorar   │
+│ (Dashboard)  │     │  (Matérias)  │     │(Resumos/IA)  │     │  evoluindo   │     │   melhorar   │
+│  & Agenda    │     │  & Assuntos  │     │ & Chat Tutor │     │ (Simulados)  │     │ (Diagnóstico)│
 └──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
 ```
 
@@ -62,8 +63,8 @@ A aplicação é dividida em dois ecossistemas independentes e desacoplados, com
                 ▼                        ▼
 ┌──────────────────────────────┐   ┌──────────────────────────────┐
 │       Banco de Dados         │   │   Inteligência Artificial    │
-│        MySQL 8.0             │   │       Groq Cloud API         │
-│  JPA / Hibernate Relacional  │   │  LLaMA 3.3 70B Versatile     │
+│        PostgreSQL            │   │       Groq Cloud API         │
+│  JPA / Hibernate Relacional  │   │   Llama 3.3 70B Versatile    │
 └──────────────────────────────┘   └──────────────────────────────┘
 ```
 
@@ -71,101 +72,166 @@ A aplicação é dividida em dois ecossistemas independentes e desacoplados, com
 
 ## 📱 Front-end Mobile (React Native & Expo)
 
-O front-end móvel foi estruturado para proporcionar uma experiência fluida, moderna e responsiva em dispositivos Android e iOS.
+O aplicativo móvel foi desenvolvido em React Native com TypeScript e Expo, proporcionando interface moderna, tipagem estrita e navegação nativa e intuitiva.
 
 ### Tecnologias Utilizadas:
 - **Framework:** React Native com **Expo** (`~57.0.22`)
-- **Linguagem:** TypeScript
-- **Roteamento & Telas:** `@react-navigation/native` e `@react-navigation/native-stack`
-- **Componentes de Interface:** `react-native-safe-area-context` e `react-native-screens`
-- **Ambiente de Execução:** Suporte a emuladores Android/iOS, navegador Web e dispositivos físicos via Expo Go
+- **Linguagem:** TypeScript (compilação estrita com `npx tsc --noEmit` sem erros)
+- **Navegação:** `@react-navigation/native` e `@react-navigation/native-stack`
+- **Componentes & Telas:** `react-native-safe-area-context` e `react-native-screens`
+- **Estilização:** StyleSheet nativo e temas centralizados (`tokens.css`, `screenTheme.ts`)
+- **Variáveis de Ambiente:** Suporte a `.env` com template `frontend/.env.example`
 
-### Telas e Módulos do Aplicativo:
-- **Tela de Login / Autenticação:** Acesso seguro com validação de credenciais.
-- **Tela Home / Dashboard:** Visão geral das matérias em andamento e progresso.
-- **Tela de Matérias:** Listagem de disciplinas com indicadores de tópicos.
-- **Tela de Assuntos:** Detalhamento dos tópicos dentro de cada matéria.
-- **Tela de Avaliação / Simulado:** Interface de resolução de questões com navegação sequencial.
-- **Tela de Resultado:** Exibição da nota obtida, percentual de acerto e gabarito comentado.
-- **Tela de Perfil do Estudante:** Dados cadastrais e histórico de conquistas.
-- **Tela de Chat / Tutor IA:** Diálogo interativo para tirar dúvidas com o assistente pedagógico.
+### Módulos e Telas Integradas:
+1. **Autenticação:** Telas de `Login`, `Cadastro` e `RecuperacaoSenha`.
+2. **Dashboard / Home (`Home.tsx`):**
+   - Ofensiva de estudos em dias (`streakDays`), card "Continuar de onde parou".
+   - Carrossel de matérias com cores, ícones e progresso calculado em tempo real.
+   - Barra de navegação inferior permanente para alternância ágil de telas.
+3. **Cronograma e Estudos (`Agenda.tsx`):**
+   - Listagem de compromissos categorizados por dia e horário.
+   - Suporte a marcação rápida de tarefas concluídas (toggle) e agendamento de novas sessões.
+4. **Matérias & Assuntos (`Materias.tsx`, `Materia.tsx`, `Assuntos.tsx`):**
+   - Visualização por matéria com tokens visuais (`colorKey`, `primaryColor`, `icon`).
+   - Lista de assuntos com badges de status (`pendente`, `andamento`, `concluido`) e atualização com um toque.
+   - Botão direto para iniciar sessão de tutoria com IA sobre a matéria/assunto atual.
+5. **Tutor Inteligente de IA (`ChatIAScreen.tsx`):**
+   - Chat interativo com suporte a conversas continuadas (multi-turn).
+   - Contexto acadêmico pré-carregado a partir da matéria selecionada.
+6. **Simulados e Avaliação (`TelaQuiz.tsx` e `TelaResultado.tsx`):**
+   - Resolução de prova sem exposição prévia de gabaritos.
+   - Tela de resultado com nota, percentual de aproveitamento e diagnóstico automático de **pontos fortes** e **pontos fracos a revisar**.
+7. **Perfil do Aluno (`Perfil.tsx`):**
+   - Estatísticas de precisão geral (`overallAccuracy`), total de questões respondidas e dias em sequência.
 
 ---
 
 ## ⚙️ Back-end RESTful API (Java 21 & Spring Boot 4)
 
-O back-end foi construído com foco em alta confiabilidade, segurança e aderência aos padrões de mercado da engenharia de software corporativa.
+O back-end foi construído com arquitetura robusta, segura e orientada a serviços corporativos.
 
 ### Tecnologias e Bibliotecas:
 - **Linguagem:** Java 21 LTS
-- **Framework:** Spring Boot 4 (Spring Data JPA, Spring Web MVC, Spring Validation)
-- **Segurança:** Spring Security com criptografia **BCrypt** e tokens **JWT (io.jsonwebtoken / HMAC-SHA256)**
-- **Banco de Dados:** MySQL 8.0 com Hibernate ORM
+- **Framework:** Spring Boot 4 (`spring-boot-starter-webmvc`, `spring-boot-starter-data-jpa`, `spring-boot-starter-security`, `spring-boot-starter-validation`)
+- **Segurança:** Spring Security com criptografia **BCrypt** e tokens **JWT (io.jsonwebtoken / HMAC-SHA256)** com expiração de 24h
+- **Banco de Dados:** **PostgreSQL** com Hibernate ORM (`PostgreSQLDialect` e mapeamento `TEXT`)
 - **Inteligência Artificial:** **Groq Cloud API** com modelo **Llama 3.3 70B Versatile**
-- **Documentação Interativa:** Springdoc OpenAPI 3.0 e interface Swagger UI
-- **Comunicação Cross-Origin:** Suporte completo a **CORS** para integração mobile sem restrições
-- **Qualidade de Software:** **70 testes automatizados** aprovados (100% de sucesso)
+- **Documentação Interativa:** Springdoc OpenAPI 3.0 e Swagger UI
+- **Comunicação Cross-Origin:** Configuração global de **CORS** para integração fluida com emuladores e dispositivos mobile
+- **Qualidade de Software:** Testes automatizados unitários e de integração com JUnit 5 e MockMvc
 
 ### Principais Módulos do Back-end:
 1. **🔐 Autenticação & Gestão de Usuários (`/api/auth`, `/api/users`)**:
-   - Registro de estudantes com validações de dados e verificação de e-mail duplicado.
+   - Registro de estudantes com validações e proteção contra e-mails duplicados.
    - Login seguro com geração de token JWT Bearer.
-   - Consulta de perfil autenticado (`/api/users/profile` e `/api/users/me`).
-2. **📚 Gestão Acadêmica Multitenancy (`/api/subjects`, `/api/topics`, `/api/materials`)**:
-   - Cadastro e gerenciamento hierárquico: Matérias ➔ Tópicos ➔ Materiais didáticos.
-   - Isolamento rígido de dados por estudante autenticado.
-3. **🤖 Tutor Educacional Inteligente (`/api/ai`)**:
-   - Respostas contextualizadas ao conteúdo em estudo com modelo Llama 3.3 70B via Groq.
-   - Resumos automáticos e extração didática de conceitos-chave.
-   - Mecanismo de fallback pedagógico resiliente contra indisponibilidades.
-4. **📝 Simulados Dinâmicos Anti-Fraude (`/api/quizzes`, `/api/questions`)**:
-   - Banco de questões de múltipla escolha com gabarito único validado.
-   - Geração dinâmica de simulados de **10 ou 15 questões** por matéria ou tópico.
-   - **Mecanismo Anti-Fraude:** ocultação absoluta do gabarito durante a realização da prova (`IN_PROGRESS`).
-   - Correção imediata pós-envio (`COMPLETED`) com cálculo de nota (0.0 a 10.0), percentual e gabarito comentado.
-5. **📊 Diagnóstico de Desempenho e Recomendações (`/api/performance`)**:
-   - Taxas de acerto gerais e por disciplina.
-   - Classificação algorítmica de maturidade:
-     - 🔴 **`CRITICAL`** (< 50% de acerto)
-     - 🟡 **`REGULAR`** (50% a 74.9%)
-     - 🟢 **`MASTERED`** (≥ 75%)
-   - Recomendação de materiais internos e elaboração de plano de estudos personalizado pela IA.
+   - Perfil do estudante (`/api/users/me`) com dados consolidados (`streakDays`, `avatarEmoji`, `overallAccuracy`, `totalQuestionsAnswered`, `totalQuizzesCompleted`).
+2. **🏠 Dashboard Unificado (`/api/dashboard`)**:
+   - Endpoint consolidado (`GET /api/dashboard`) que entrega em uma única requisição todos os indicadores da Home (ofensiva, progresso global, próximo tópico a estudar e resumo de matérias com cores e progresso).
+3. **📅 Agenda & Cronograma (`/api/schedules`)**:
+   - Gestão completa de tarefas de estudo (`GET`, `POST`, `DELETE`).
+   - Endpoint rápido `PATCH /api/schedules/{id}/toggle` para marcar compromissos como concluídos.
+4. **📚 Gestão Acadêmica Multitenancy (`/api/subjects`, `/api/topics`, `/api/materials`)**:
+   - Hierarquia: Matérias ➔ Assuntos/Tópicos ➔ Materiais didáticos.
+   - Atributos visuais em Matérias (`colorKey`, `primaryColor`, `icon`) e contagem dinâmica de progresso (`completedCount`, `inProgressCount`, `totalTopics`, `progressPercentage`).
+   - Endpoint rápido `PATCH /api/topics/{id}/status?status=concluido` para atualização instantânea pelo mobile.
+5. **🤖 Tutor Educacional com IA Generativa (`/api/ai`)**:
+   - Chat multi-turn conversacional (`POST /api/ai/chat`) com retenção de histórico (`messages: [{role, content}]`).
+   - Tira-dúvidas pontual (`POST /api/ai/ask`) e resumos automáticos (`POST /api/ai/summarize`).
+   - Mecanismo de fallback pedagógico resiliente contra indisponibilidades da rede externa.
+6. **📝 Simulados Dinâmicos Anti-Fraude & Diagnóstico (`/api/quizzes`, `/api/questions`)**:
+   - Banco de questões de múltipla escolha com gabarito único.
+   - Geração dinâmica de simulados de **10 ou 15 questões** por matéria ou assunto.
+   - **Mecanismo Anti-Fraude:** ocultação absoluta de gabaritos durante a prova (`IN_PROGRESS`).
+   - Correção instantânea pós-envio (`COMPLETED`) com nota (0.0 a 10.0), gabarito comentado e listas de **pontos fortes** e **pontos fracos** geradas dinamicamente.
+7. **📊 Diagnóstico de Desempenho e Recomendações (`/api/performance`)**:
+   - Taxas de acerto gerais e por disciplina (`CRITICAL`, `REGULAR`, `MASTERED`).
+   - Recomendações didáticas da IA com roteiro personalizado de estudos.
+
+---
+
+## 📋 Catálogo Completo de Endpoints REST
+
+| Módulo | Método | Endpoint | Protegido? | Descrição |
+| :--- | :---: | :--- | :---: | :--- |
+| **Dashboard** | `GET` | `/api/dashboard` | Sim | Resumo consolidado para a tela inicial (ofensiva, matérias, progresso) |
+| **Agenda** | `GET` | `/api/schedules` | Sim | Lista compromissos de estudo ordenados cronologicamente |
+| | `POST` | `/api/schedules` | Sim | Cria novo compromisso de estudo |
+| | `PATCH`| `/api/schedules/{id}/toggle` | Sim | Alterna status de conclusão do compromisso |
+| | `DELETE`| `/api/schedules/{id}` | Sim | Remove compromisso de estudo |
+| **Autenticação** | `POST` | `/api/users/register` | Não | Cadastra um novo estudante |
+| | `POST` | `/api/auth/login` | Não | Autentica e gera token JWT Bearer |
+| | `GET` | `/api/users/profile` | Sim | Consulta perfil autenticado |
+| | `GET` | `/api/users/me` | Sim | Perfil completo com métricas de desempenho |
+| **Matérias** | `GET` | `/api/subjects` | Sim | Lista matérias com cores, ícones e contadores de progresso |
+| | `POST` | `/api/subjects` | Sim | Cadastra nova matéria (suporta colorKey, primaryColor, icon) |
+| | `GET` | `/api/subjects/{id}` | Sim | Detalhes da matéria e lista de seus tópicos |
+| | `PUT` | `/api/subjects/{id}` | Sim | Atualiza dados da matéria |
+| | `DELETE`| `/api/subjects/{id}` | Sim | Exclui matéria e seus assuntos |
+| **Assuntos** | `GET` | `/api/subjects/{subjectId}/topics` | Sim | Lista tópicos vinculados à matéria |
+| | `POST` | `/api/subjects/{subjectId}/topics` | Sim | Cria tópico na matéria com status inicial |
+| | `GET` | `/api/topics/{id}` | Sim | Detalhes do tópico |
+| | `PUT` | `/api/topics/{id}` | Sim | Atualiza título/descrição do tópico |
+| | `PATCH`| `/api/topics/{id}/status?status=...` | Sim | Atualiza status (`pendente`, `andamento`, `concluido`) |
+| | `DELETE`| `/api/topics/{id}` | Sim | Remove o tópico |
+| **Materiais** | `GET` | `/api/topics/{topicId}/materials` | Sim | Lista materiais didáticos do tópico |
+| | `POST` | `/api/topics/{topicId}/materials` | Sim | Adiciona material didático de apoio |
+| | `GET` | `/api/study-materials/{id}` | Sim | Consulta material por ID |
+| | `PUT` | `/api/study-materials/{id}` | Sim | Atualiza material didático |
+| | `DELETE`| `/api/study-materials/{id}` | Sim | Remove material |
+| **Questões** | `POST` | `/api/topics/{topicId}/questions` | Sim | Cadastra questão com alternativas |
+| | `GET` | `/api/topics/{topicId}/questions` | Sim | Lista questões do tópico |
+| | `GET` | `/api/questions/{id}` | Sim | Detalhes da questão com gabarito |
+| | `DELETE`| `/api/questions/{id}` | Sim | Remove questão |
+| **Simulados** | `POST` | `/api/quizzes/generate` | Sim | Gera simulado com gabarito oculto |
+| | `GET` | `/api/quizzes/{id}` | Sim | Caderno de prova para resolução |
+| | `POST` | `/api/quizzes/{id}/submit` | Sim | Envia respostas, fecha prova e retorna nota, gabarito, fortes e fracos |
+| | `GET` | `/api/quizzes/{id}/result` | Sim | Resultado detalhado com diagnóstico |
+| | `GET` | `/api/quizzes` | Sim | Histórico de simulados do estudante |
+| **Tutor IA** | `POST` | `/api/ai/chat` | Sim | **Chat conversacional multi-turn** com retenção de histórico |
+| | `POST` | `/api/ai/ask` | Sim | Tira dúvidas pontuais sobre o tópico |
+| | `POST` | `/api/ai/summarize` | Sim | Gera resumo didático e tópicos-chave |
+| **Performance**| `GET` | `/api/performance/summary` | Sim | Resumo consolidado de acertos e notas |
+| | `GET` | `/api/performance/topics` | Sim | Diagnóstico de domínio por assunto |
+| | `GET` | `/api/performance/history` | Sim | Histórico de avaliações |
+| | `GET` | `/api/performance/recommendations` | Sim | Recomendações e plano de estudo gerado pela IA |
 
 ---
 
 ## 📂 Estrutura de Pastas do Repositório
 
-O projeto é organizado com separação estrita de responsabilidades:
-
 ```text
 trilha-mais/
-├── backend/                              # Servidor da API REST (Java 21 / Spring Boot 4)
+├── backend/                              # Servidor API REST (Java 21 / Spring Boot 4 / PostgreSQL)
 │   ├── src/main/java/com/trilhamais/backend/
 │   │   ├── config/                       # Segurança, CORS, JWT e OpenAPI
-│   │   ├── controller/                   # 9 Controladores REST
-│   │   ├── dto/                          # 32 Objetos de Transferência de Dados
-│   │   ├── entity/ / model/              # 11 Entidades JPA e Enums
+│   │   ├── controller/                   # 11 Controladores REST (Dashboard, Schedule, Ai, etc.)
+│   │   ├── dto/                          # Objetos de Transferência de Dados (Requests/Responses)
+│   │   ├── entity/ / model/              # 12 Entidades JPA mapeadas (PostgreSQL)
 │   │   ├── exception/                    # Tratamento Global de Exceções RFC 7807
-│   │   ├── repository/                   # 9 Interfaces Spring Data JPA
-│   │   └── service/                      # 9 Serviços com Regras de Negócio e IA
-│   ├── src/test/java/                    # 70 Testes Automatizados (Unitários e E2E)
-│   ├── pom.xml                           # Dependências e Plugins do Maven
+│   │   ├── repository/                   # Interfaces Spring Data JPA
+│   │   └── service/                      # Serviços de Regra de Negócio e IA Groq
+│   ├── src/main/resources/
+│   │   └── application.properties        # Configurações do PostgreSQL, JWT e Groq
+│   ├── src/test/java/                    # Testes Automatizados (Unitários e E2E)
+│   ├── pom.xml                           # Dependências Maven (Spring Boot 4, PostgreSQL, JJWT)
 │   └── mvnw                              # Maven Wrapper executável
 │
-├── frontend/                             # Aplicativo Mobile (React Native / Expo)
-│   ├── assets/                           # Ícones, splash screens e imagens
+├── frontend/                             # Aplicativo Mobile (React Native / Expo / TypeScript)
+│   ├── assets/                           # Ícones, splash screen e imagens
 │   ├── src/
-│   │   ├── Navigation/                   # Configuração de rotas de navegação
-│   │   ├── pages/                        # Telas (Login, Home, Matérias, Quiz, Chat)
-│   │   ├── Mocks/                        # Dados simulados para prototipação
-│   │   └── types/                        # Tipagens TypeScript da aplicação
-│   ├── App.tsx                           # Componente raiz do aplicativo
+│   │   ├── components/                   # Componentes reutilizáveis (BarraNavegacao, etc.)
+│   │   ├── Navigation/                   # Rotas unificadas do app (AppRoutes.tsx)
+│   │   ├── pages/                        # Telas (Home, Agenda, Materia, Assuntos, ChatIA, Quiz, Perfil)
+│   │   ├── services/                     # Serviços de integração (groq, api)
+│   │   └── theme/                        # Paleta de cores, tipografia e espaçamentos
+│   ├── .env.example                      # Template de variáveis de ambiente do mobile
+│   ├── App.tsx                           # Ponto de entrada do aplicativo
 │   ├── app.json                          # Configurações do Expo
-│   ├── package.json                      # Dependências do ecossistema Node/Expo
-│   └── tsconfig.json                     # Configuração do TypeScript
+│   ├── package.json                      # Dependências Node / Expo
+│   └── tsconfig.json                     # Configuração estrita do TypeScript
 │
-├── TrilhaMais_API_Postman_Collection.json # Coleção Postman pronta para testes
-├── .gitignore                            # Arquivos e diretórios ignorados
+├── TrilhaMais_API_Postman_Collection.json # Coleção oficial do Postman com todos os endpoints
+├── .gitignore                            # Arquivos e credenciais ignorados pelo Git
 └── README.md                             # Documentação principal do projeto
 ```
 
@@ -177,7 +243,11 @@ trilha-mais/
 
 #### Pré-requisitos:
 - **Java 21 (LTS)** instalado (`java -version`)
-- **MySQL 8.0** ativo com o banco configurado
+- **PostgreSQL** instalado e em execução (porta padrão `5432`)
+- Criar o banco de dados no PostgreSQL:
+  ```sql
+  CREATE DATABASE trilha_mais;
+  ```
 
 #### Passos:
 ```bash
@@ -187,9 +257,9 @@ cd backend
 # 2. Inicie a aplicação com o Maven Wrapper
 ./mvnw spring-boot:run
 ```
-O servidor estará disponível em: **`http://localhost:8080`**.
+O servidor inicializará automaticamente as tabelas e estará acessível em: **`http://localhost:8080`**.
 
-#### Executando a Suíte de 70 Testes Automatizados:
+#### Executando a Suíte de Testes Automatizados:
 ```bash
 cd backend
 ./mvnw test
@@ -201,7 +271,7 @@ cd backend
 
 #### Pré-requisitos:
 - **Node.js** (versão 18 ou superior) instalado
-- Aplicativo **Expo Go** instalado no smartphone (opcional para testes físicos)
+- Dispositivo Android/iOS com o aplicativo **Expo Go** instalado (ou emulador/navegador)
 
 #### Passos:
 ```bash
@@ -211,69 +281,45 @@ cd frontend
 # 2. Instale as dependências
 npm install
 
-# 3. Inicie o servidor de desenvolvimento do Expo
+# 3. Configure as variáveis de ambiente (se necessário)
+cp .env.example .env
+
+# 4. Inicie o servidor de desenvolvimento do Expo
 npx expo start
 ```
-Após a inicialização:
-- Pressione **`a`** para abrir no emulador Android conectado.
-- Pressione **`i`** para abrir no simulador iOS (macOS).
+
+Após iniciar:
+- Pressione **`a`** para abrir no emulador Android.
+- Pressione **`i`** para abrir no simulador iOS.
 - Pressione **`w`** para abrir no navegador Web.
-- Ou escaneie o **QR Code** exibido no terminal utilizando o app **Expo Go** no smartphone conectado à mesma rede Wi-Fi.
+- Ou escaneie o **QR Code** no terminal usando o aplicativo **Expo Go** no smartphone.
 
 ---
 
 ## 🌐 Testes e Documentação das APIs REST
 
 ### 1. Swagger UI Interativo (Via Navegador)
-Com o back-end em execução, acesse no navegador:  
+Com o back-end em execução, acesse:  
 👉 **`http://localhost:8080/swagger-ui.html`**  
 *(Ou a especificação bruta OpenAPI JSON em `http://localhost:8080/v3/api-docs`)*
 
-- Para testar endpoints protegidos, clique no botão **`Authorize 🔒`** no topo da tela do Swagger e insira o token obtido no login no formato: `Bearer seu_token_jwt`.
+- Para testar rotas protegidas, clique no botão **`Authorize 🔒`** no canto superior direito e insira o token obtido no login no formato: `Bearer seu_token_jwt`.
 
-### 2. Coleção do Postman (Guia Passo a Passo de Importação e Uso)
+---
 
-O repositório inclui uma coleção oficial completa e pronta para uso: [`TrilhaMais_API_Postman_Collection.json`](./TrilhaMais_API_Postman_Collection.json).
+### 2. Coleção do Postman (Guia Oficial)
+
+O repositório inclui a coleção oficial completa e atualizada: [`TrilhaMais_API_Postman_Collection.json`](./TrilhaMais_API_Postman_Collection.json).
 
 #### 📥 Como Importar no Postman:
-1. Abra o aplicativo do **Postman** (Desktop ou Web).
-2. No canto superior esquerdo da barra de navegação, clique no botão **"Import"** (ou use o atalho `Ctrl + O` / `Cmd + O`).
-3. Arraste e solte o arquivo **`TrilhaMais_API_Postman_Collection.json`** na janela de importação (ou clique em **"files"** e selecione o arquivo na raiz deste repositório).
-4. Confirme a importação clicando no botão **"Import"**.
-5. A coleção **"Trilha+ API — Coleção Postman Oficial (UNINASSAU)"** aparecerá instantaneamente na aba lateral **Collections**, estruturada em 9 pastas modulares.
+1. Abra o **Postman** (Desktop ou Web).
+2. Clique no botão **"Import"** no canto superior esquerdo (ou `Ctrl + O` / `Cmd + O`).
+3. Selecione ou arraste o arquivo **`TrilhaMais_API_Postman_Collection.json`** da raiz do projeto.
+4. A coleção **"Trilha+ API — Coleção Postman Oficial (UNINASSAU)"** será carregada com todas as pastas organizadas.
 
-#### ⚙️ Como Funciona o Gerenciamento Automático de Tokens:
-- A coleção possui duas variáveis nativas pré-configuradas:
-  - **`baseUrl`**: Definida por padrão como `http://localhost:8080`.
-  - **`token`**: Variável dinâmica que armazena o token JWT.
-- **Automação Inteligente:** A requisição **"Login (Obter Token JWT)"** possui um script de pós-execução (*Tests Script*) que intercepta o `accessToken` retornado pelo servidor e o salva automaticamente na variável `{{token}}` da coleção:
-  ```javascript
-  var jsonData = pm.response.json();
-  if (jsonData.accessToken) {
-      pm.collectionVariables.set('token', jsonData.accessToken);
-      console.log('Token JWT capturado com sucesso!');
-  }
-  ```
-- **Sem esforço manual:** Todas as requisições protegidas subsequentes já herdam e enviam automaticamente o cabeçalho `Authorization: Bearer {{token}}`. Você **não precisa** copiar e colar tokens manualmente entre as requisições!
-
-#### 🚀 Fluxo de Execução Recomendado no Postman:
-1. **Inicialize a API:** Certifique-se de que o back-end está ativo (`./mvnw spring-boot:run`).
-2. **Registro de Aluno:** Na pasta `01. Autenticação & Usuários`, execute **"Cadastrar Novo Estudante"** (`POST /api/users/register`).
-3. **Login Automático:** Execute **"Login (Obter Token JWT)"** (`POST /api/auth/login`). Observe o console confirmando a captura do token JWT.
-4. **Verificação de Perfil:** Execute **"Consultar Perfil do Estudante (/api/users/me)"** para confirmar a autenticação Bearer.
-5. **Criação de Conteúdo:**
-   - Na pasta `02. Matérias`, execute **"Cadastrar Nova Matéria"** (ex: *Estrutura de Dados*).
-   - Na pasta `03. Assuntos`, execute **"Cadastrar Assunto na Matéria"** (ex: *Árvores Binárias*).
-   - Na pasta `04. Materiais Didáticos`, execute **"Cadastrar Material de Apoio"**.
-6. **Assistência com IA Generativa:**
-   - Na pasta `08. Tutor IA (Groq LLaMA 3.3)`, execute **"Tirar Dúvida Aberta com o Tutor IA"** ou **"Gerar Resumo Didático de Conteúdo"**.
-7. **Simulado Anti-Fraude e Avaliação:**
-   - Na pasta `05. Banco de Questões`, cadastre questões de múltipla escolha com alternativas.
-   - Na pasta `06. Simulados Inteligentes`, execute **"Gerar Simulado Dinâmico (10 Questões)"**.
-   - Abra o simulado em **"Consultar Caderno de Prova"** e note o sigilo de gabarito.
-   - Execute **"Submeter Respostas e Corrigir Simulado"** para receber nota de 0.0 a 10.0 e gabarito comentado.
-8. **Análise de Desempenho:**
-   - Na pasta `07. Painel de Desempenho`, consulte **"Resumo Geral de Desempenho"** e **"Diagnóstico e Recomendações da IA"**.
+#### ⚙️ Gerenciamento Automático de Tokens:
+- A requisição **"Login (Obter Token JWT)"** possui script pós-execução que armazena automaticamente o token retornado na variável `{{token}}`.
+- Todas as demais requisições autenticadas já herdam automaticamente o cabeçalho `Authorization: Bearer {{token}}`. Não é necessário copiar e colar tokens manualmente!
 
 ---
 
@@ -284,4 +330,3 @@ Este projeto é desenvolvido com finalidade estritamente educacional para a conc
 ---
 
 *UNINASSAU Caruaru — Análise e Desenvolvimento de Sistemas | 2026*
-
