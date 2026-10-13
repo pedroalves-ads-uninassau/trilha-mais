@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView } from 'react-native';
-import { c, s, r } from '../theme/screenTheme';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, StatusBar } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient'; // instalar: npx expo install expo-linear-gradient
 
 export type ItemRevisao = {
   enunciado: string;
@@ -13,9 +13,29 @@ export type ResultadoQuiz = {
   acertos: number;
   total: number;
   revisao: ItemRevisao[];
+  fortes?: string[]; // assuntos em que foi bem
+  fracos?: string[]; // assuntos a melhorar
 };
 
-const PONTOS_POR_QUESTAO = 10;
+// Cores do design da tela de resultado
+const COR = {
+  fundo: '#F8FAFC',
+  azulTopo1: '#1E40AF',
+  azulTopo2: '#2563EB',
+  azul: '#2563EB',
+  azulClaro: '#EFF6FF',
+  azulBorda: '#BFDBFE',
+  verde: '#059669',
+  verdeClaro: '#ECFDF5',
+  verdeBorda: '#A7F3D0',
+  vermelho: '#EF4444',
+  vermelhoClaro: '#FEF2F2',
+  vermelhoBorda: '#FECACA',
+  texto: '#0F172A',
+  textoSuave: '#475569',
+  borda: '#E2E8F0',
+  branco: '#FFFFFF',
+};
 
 type Props = {
   resultado?: ResultadoQuiz;
@@ -24,137 +44,188 @@ type Props = {
   onVoltar?: () => void;
 };
 
-// TODO: dado de exemplo, usado só se a tela abrir sem resultado
+// Dado de exemplo, usado só se a tela abrir sem resultado
 const EXEMPLO: ResultadoQuiz = {
   acertos: 3,
-  total: 4,
-  revisao: [
-    { enunciado: 'Qual palavra abaixo é um substantivo?', respostaUsuario: 'Felicidade', respostaCorreta: 'Felicidade', acertou: true },
-    { enunciado: 'Em "Os alunos estudaram muito", o verbo é:', respostaUsuario: 'muito', respostaCorreta: 'estudaram', acertou: false },
-    { enunciado: 'Qual é o antônimo de "generoso"?', respostaUsuario: 'Avarento', respostaCorreta: 'Avarento', acertou: true },
-    { enunciado: 'Qual frase está no plural?', respostaUsuario: 'As casas são novas', respostaCorreta: 'As casas são novas', acertou: true },
-  ],
+  total: 10,
+  revisao: [],
+  fortes: ['Variação histórica', 'Variação situacional', 'Norma-padrão'],
+  fracos: ['Variação regional', 'Variação social'],
 };
 
-function feedbackPorPercentual(p: number) {
-  if (p === 100) return { titulo: 'Excelente!', texto: 'Você acertou tudo. Continue assim.' };
-  if (p >= 70) return { titulo: 'Muito bem!', texto: 'Você domina boa parte do conteúdo. Revise os erros para chegar aos 100%.' };
-  if (p >= 50) return { titulo: 'Bom começo', texto: 'Você está no caminho. Reveja os pontos de atenção e tente de novo.' };
-  return { titulo: 'Vale revisar o conteúdo', texto: 'Estude os pontos de atenção abaixo e refaça o quiz.' };
+function mensagemPorPercentual(p: number) {
+  if (p === 100) return { emoji: '🏆', titulo: 'Excelente!' };
+  if (p >= 70) return { emoji: '🎉', titulo: 'Muito bem!' };
+  if (p >= 50) return { emoji: '👏', titulo: 'Bom trabalho!' };
+  return { emoji: '💪', titulo: 'Continue praticando!' };
 }
 
 export default function ResultadoScreen({ resultado = EXEMPLO, onRefazer, onDesempenho, onVoltar }: Props) {
   const [revisando, setRevisando] = useState(false);
 
-  const { acertos, total, revisao } = resultado;
+  const { acertos, total, revisao, fortes = [], fracos = [] } = resultado;
   const erros = total - acertos;
   const percentual = total > 0 ? Math.round((acertos / total) * 100) : 0;
-  const pontuacao = acertos * PONTOS_POR_QUESTAO;
-  const pontuacaoMax = total * PONTOS_POR_QUESTAO;
-  const fb = feedbackPorPercentual(percentual);
-  const pontosAtencao = revisao.filter((i) => !i.acertou);
+  const msg = mensagemPorPercentual(percentual);
 
   return (
-    <SafeAreaView style={st.tela}>
-      <ScrollView contentContainerStyle={st.conteudo}>
-        {/* Pontuação + percentual */}
-        <View style={st.resumo}>
-          <Text style={st.percentual}>{percentual}%</Text>
-          <Text style={st.pontuacao}>{pontuacao} de {pontuacaoMax} pontos</Text>
-        </View>
+    <View style={st.tela}>
+      <StatusBar barStyle="light-content" />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
+        {/* Topo azul */}
+        <LinearGradient colors={[COR.azulTopo1, COR.azulTopo2]} style={st.topo}>
+          <View style={st.circulo} />
+          <Text style={st.emoji}>{msg.emoji}</Text>
+          <Text style={st.titulo}>{msg.titulo}</Text>
+          <Text style={st.subtitulo}>Avaliação concluída</Text>
 
-        {/* Acertos e erros */}
-        <View style={st.linha}>
-          <View style={[st.caixa, { borderColor: c.success }]}>
-            <Text style={[st.caixaNumero, { color: c.success }]}>{acertos}</Text>
-            <Text style={st.caixaRotulo}>{acertos === 1 ? 'acerto' : 'acertos'}</Text>
+          <View style={st.cardNota}>
+            <Text style={st.percentual}>{percentual}%</Text>
+            <Text style={st.notaTexto}>{acertos} de {total} corretas</Text>
           </View>
-          <View style={[st.caixa, { borderColor: c.error }]}>
-            <Text style={[st.caixaNumero, { color: c.error }]}>{erros}</Text>
-            <Text style={st.caixaRotulo}>{erros === 1 ? 'erro' : 'erros'}</Text>
-          </View>
-        </View>
+        </LinearGradient>
 
-        {/* Feedback */}
-        <View style={st.card}>
-          <Text style={st.cardTitulo}>{fb.titulo}</Text>
-          <Text style={st.cardTexto}>{fb.texto}</Text>
-        </View>
-
-        {/* Pontos de atenção */}
-        <Text style={st.secao}>Pontos de atenção</Text>
-        {pontosAtencao.length === 0 ? (
-          <View style={st.card}>
-            <Text style={st.cardTexto}>Nenhum ponto de atenção. Você acertou todas as questões.</Text>
-          </View>
-        ) : (
-          pontosAtencao.map((item, i) => (
-            <View key={i} style={[st.card, { borderColor: c.error }]}>
-              <Text style={st.cardTitulo}>{item.enunciado}</Text>
-              <Text style={st.cardTexto}>Correta: {item.respostaCorreta}</Text>
+        <View style={st.corpo}>
+          {/* Corretas / Erradas / Total */}
+          <View style={st.linha}>
+            <View style={[st.caixa, { backgroundColor: COR.verdeClaro, borderColor: COR.verdeBorda }]}>
+              <Text style={[st.caixaNumero, { color: COR.verde }]}>{acertos}</Text>
+              <Text style={[st.caixaRotulo, { color: COR.verde }]}>Corretas</Text>
             </View>
-          ))
-        )}
+            <View style={[st.caixa, { backgroundColor: COR.vermelhoClaro, borderColor: COR.vermelhoBorda }]}>
+              <Text style={[st.caixaNumero, { color: COR.vermelho }]}>{erros}</Text>
+              <Text style={[st.caixaRotulo, { color: COR.vermelho }]}>Erradas</Text>
+            </View>
+            <View style={[st.caixa, { backgroundColor: COR.azulClaro, borderColor: COR.azulBorda }]}>
+              <Text style={[st.caixaNumero, { color: COR.azul }]}>{total}</Text>
+              <Text style={[st.caixaRotulo, { color: COR.azul }]}>Total</Text>
+            </View>
+          </View>
 
-        {/* Revisão (aparece ao tocar no botão) */}
-        {revisando && (
-          <>
-            <Text style={st.secao}>Revisão das respostas</Text>
-            {revisao.map((item, i) => (
-              <View key={i} style={[st.card, { borderColor: item.acertou ? c.success : c.error }]}>
-                <Text style={st.cardTitulo}>{i + 1}. {item.enunciado}</Text>
-                <Text style={{ color: item.acertou ? c.success : c.error, fontWeight: '700' }}>
+          {/* Análise do desempenho */}
+          <View style={st.card}>
+            <View style={st.cardCabecalho}>
+              <View style={st.icone}>
+                <Text style={{ fontSize: 16 }}>📊</Text>
+              </View>
+              <Text style={st.cardTitulo}>Análise do seu desempenho</Text>
+            </View>
+
+            {fortes.length > 0 && (
+              <>
+                <Text style={[st.secao, { color: COR.verde }]}>✅ Você foi bem em:</Text>
+                {fortes.map((a) => (
+                  <View key={a} style={st.item}>
+                    <View style={[st.ponto, { backgroundColor: COR.verde }]} />
+                    <Text style={st.itemTexto}>{a}</Text>
+                  </View>
+                ))}
+              </>
+            )}
+
+            {fracos.length > 0 && (
+              <>
+                <Text style={[st.secao, { color: COR.vermelho, marginTop: 12 }]}>⚠️ Precisa melhorar em:</Text>
+                {fracos.map((a) => (
+                  <View key={a} style={st.item}>
+                    <View style={[st.ponto, { backgroundColor: COR.vermelho }]} />
+                    <Text style={st.itemTexto}>{a}</Text>
+                  </View>
+                ))}
+              </>
+            )}
+
+            {fortes.length === 0 && fracos.length === 0 && (
+              <Text style={st.itemTexto}>Sem assuntos para analisar neste quiz.</Text>
+            )}
+          </View>
+
+          {/* Revisão das respostas */}
+          {revisando &&
+            revisao.map((item, i) => (
+              <View
+                key={i}
+                style={[st.card, { borderColor: item.acertou ? COR.verdeBorda : COR.vermelhoBorda }]}
+              >
+                <Text style={st.revEnunciado}>{i + 1}. {item.enunciado}</Text>
+                <Text style={{ color: item.acertou ? COR.verde : COR.vermelho, fontWeight: '700' }}>
                   {item.respostaUsuario === null ? 'Sem resposta' : `Sua resposta: ${item.respostaUsuario}`}
                 </Text>
-                {!item.acertou && <Text style={st.cardTexto}>Correta: {item.respostaCorreta}</Text>}
+                {!item.acertou && <Text style={st.itemTexto}>Correta: {item.respostaCorreta}</Text>}
               </View>
             ))}
-          </>
-        )}
 
-        {/* Botões */}
-        <TouchableOpacity style={st.botao} onPress={() => setRevisando((v) => !v)}>
-          <Text style={st.botaoTexto}>{revisando ? 'Ocultar revisão' : 'Revisar respostas'}</Text>
-        </TouchableOpacity>
-        {onRefazer && (
-          <TouchableOpacity style={st.botaoSec} onPress={onRefazer}>
-            <Text style={st.botaoSecTexto}>Refazer quiz</Text>
-          </TouchableOpacity>
-        )}
-        {onDesempenho && (
-          <TouchableOpacity style={st.botaoSec} onPress={onDesempenho}>
-            <Text style={st.botaoSecTexto}>Ver desempenho geral</Text>
-          </TouchableOpacity>
-        )}
-        {onVoltar && (
-          <TouchableOpacity style={st.botaoSec} onPress={onVoltar}>
-            <Text style={st.botaoSecTexto}>Voltar ao início</Text>
-          </TouchableOpacity>
-        )}
+          {/* Botões */}
+          {revisao.length > 0 && (
+            <TouchableOpacity style={st.botao} onPress={() => setRevisando((v) => !v)}>
+              <Text style={st.botaoTexto}>{revisando ? 'Ocultar revisão' : 'Revisar respostas'}</Text>
+            </TouchableOpacity>
+          )}
+          {onRefazer && (
+            <TouchableOpacity style={st.botaoSec} onPress={onRefazer}>
+              <Text style={st.botaoSecTexto}>Refazer quiz</Text>
+            </TouchableOpacity>
+          )}
+          {onDesempenho && (
+            <TouchableOpacity style={st.botaoSec} onPress={onDesempenho}>
+              <Text style={st.botaoSecTexto}>Ver desempenho geral</Text>
+            </TouchableOpacity>
+          )}
+          {onVoltar && (
+            <TouchableOpacity style={st.botaoSec} onPress={onVoltar}>
+              <Text style={st.botaoSecTexto}>Voltar ao início</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const st = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: c.background },
-  conteudo: { padding: s.lg },
-  resumo: { backgroundColor: c.primary, borderRadius: r.lg, padding: s.xl, alignItems: 'center', marginBottom: s.lg },
-  percentual: { fontSize: 52, fontWeight: '800', color: c.onPrimary },
-  pontuacao: { color: c.onPrimary, marginTop: s.xs, fontSize: 16 },
-  linha: { flexDirection: 'row', marginBottom: s.lg },
-  caixa: {
-    flex: 1, alignItems: 'center', backgroundColor: c.surface, borderWidth: 2,
-    borderRadius: r.md, padding: s.lg, marginHorizontal: s.xs,
+  tela: { flex: 1, backgroundColor: COR.fundo },
+  topo: { alignItems: 'center', paddingTop: 64, paddingBottom: 36, paddingHorizontal: 24, overflow: 'hidden' },
+  circulo: {
+    position: 'absolute', top: -30, right: -30, width: 130, height: 130,
+    borderRadius: 65, backgroundColor: 'rgba(255,255,255,0.12)',
   },
-  caixaNumero: { fontSize: 32, fontWeight: '800' },
-  caixaRotulo: { color: c.textMuted },
-  secao: { fontSize: 16, fontWeight: '700', color: c.text, marginBottom: s.md, marginTop: s.sm },
-  card: { backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: r.md, padding: s.lg, marginBottom: s.md },
-  cardTitulo: { fontWeight: '700', color: c.text, marginBottom: s.xs },
-  cardTexto: { color: c.textMuted, lineHeight: 20 },
-  botao: { backgroundColor: c.primary, borderRadius: r.md, padding: s.lg, alignItems: 'center', marginTop: s.md },
-  botaoTexto: { color: c.onPrimary, fontWeight: '700' },
-  botaoSec: { borderWidth: 1, borderColor: c.primary, borderRadius: r.md, padding: s.lg, alignItems: 'center', marginTop: s.sm },
-  botaoSecTexto: { color: c.primary, fontWeight: '700' },
+  emoji: { fontSize: 44, marginBottom: 12 },
+  titulo: { fontSize: 24, fontWeight: '800', color: COR.branco },
+  subtitulo: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4, marginBottom: 20 },
+  cardNota: {
+    backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 22,
+    paddingVertical: 20, paddingHorizontal: 40, alignItems: 'center',
+  },
+  percentual: { fontSize: 52, fontWeight: '800', color: COR.branco },
+  notaTexto: { fontSize: 14, color: 'rgba(255,255,255,0.85)', fontWeight: '600', marginTop: 2 },
+  corpo: { padding: 16 },
+  linha: { flexDirection: 'row', marginBottom: 16 },
+  caixa: {
+    flex: 1, alignItems: 'center', paddingVertical: 14, borderRadius: 16,
+    borderWidth: 1, marginHorizontal: 4,
+  },
+  caixaNumero: { fontSize: 22, fontWeight: '800' },
+  caixaRotulo: { fontSize: 12, fontWeight: '600', marginTop: 2 },
+  card: {
+    backgroundColor: COR.branco, borderRadius: 18, borderWidth: 1,
+    borderColor: COR.borda, padding: 16, marginBottom: 12,
+  },
+  cardCabecalho: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
+  icone: {
+    width: 36, height: 36, borderRadius: 10, backgroundColor: COR.azul,
+    alignItems: 'center', justifyContent: 'center', marginRight: 10,
+  },
+  cardTitulo: { fontSize: 15, fontWeight: '700', color: COR.texto, flex: 1 },
+  secao: { fontSize: 13, fontWeight: '700', marginBottom: 6 },
+  item: { flexDirection: 'row', alignItems: 'center', marginBottom: 6, paddingLeft: 2 },
+  ponto: { width: 6, height: 6, borderRadius: 3, marginRight: 10 },
+  itemTexto: { fontSize: 13, color: COR.textoSuave },
+  revEnunciado: { fontWeight: '700', color: COR.texto, marginBottom: 4 },
+  botao: { backgroundColor: COR.azul, borderRadius: 14, padding: 16, alignItems: 'center', marginTop: 8 },
+  botaoTexto: { color: COR.branco, fontWeight: '700', fontSize: 15 },
+  botaoSec: {
+    borderWidth: 1, borderColor: COR.azul, borderRadius: 14, padding: 16,
+    alignItems: 'center', marginTop: 8,
+  },
+  botaoSecTexto: { color: COR.azul, fontWeight: '700', fontSize: 15 },
 });

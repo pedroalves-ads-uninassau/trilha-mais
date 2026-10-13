@@ -3,14 +3,14 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, Ale
 import { c, s, r } from '../theme/screenTheme';
 import type { ResultadoQuiz } from './TelaResultado';
 
-type Questao = { id: string; enunciado: string; alternativas: string[]; correta: number };
+type Questao = { id: string; enunciado: string; alternativas: string[]; correta: number; assunto?: string };
 
 // TODO: troque pelo seu mock em src/Mocks ou pela API
 const QUESTOES: Questao[] = [
-  { id: 'q1', enunciado: 'Qual palavra abaixo é um substantivo?', alternativas: ['Correr', 'Felicidade', 'Rapidamente', 'Azul'], correta: 1 },
-  { id: 'q2', enunciado: 'Em "Os alunos estudaram muito", o verbo é:', alternativas: ['Os', 'alunos', 'estudaram', 'muito'], correta: 2 },
-  { id: 'q3', enunciado: 'Qual é o antônimo de "generoso"?', alternativas: ['Bondoso', 'Avarento', 'Gentil', 'Honesto'], correta: 1 },
-  { id: 'q4', enunciado: 'Qual frase está no plural?', alternativas: ['O livro caiu', 'As casas são novas', 'Ela chegou cedo', 'Meu amigo veio'], correta: 1 },
+  { id: 'q1', enunciado: 'Qual palavra abaixo é um substantivo?', alternativas: ['Correr', 'Felicidade', 'Rapidamente', 'Azul'], correta: 1, assunto: 'Classes gramaticais' },
+  { id: 'q2', enunciado: 'Em "Os alunos estudaram muito", o verbo é:', alternativas: ['Os', 'alunos', 'estudaram', 'muito'], correta: 2, assunto: 'Verbos' },
+  { id: 'q3', enunciado: 'Qual é o antônimo de "generoso"?', alternativas: ['Bondoso', 'Avarento', 'Gentil', 'Honesto'], correta: 1, assunto: 'Vocabulário' },
+  { id: 'q4', enunciado: 'Qual frase está no plural?', alternativas: ['O livro caiu', 'As casas são novas', 'Ela chegou cedo', 'Meu amigo veio'], correta: 1, assunto: 'Classes gramaticais' },
 ];
 
 type Props = {
@@ -43,7 +43,16 @@ export default function QuizScreen({ questoes = QUESTOES, onFinish, onClose }: P
         respostaCorreta: qq.alternativas[qq.correta],
         acertou: respostas[i] === qq.correta,
       }));
-      onFinish({ acertos, total, revisao });
+      // assuntos: "foi bem" = acertou todas as questões do assunto; "melhorar" = errou ou deixou em branco alguma
+      const porAssunto: Record<string, boolean> = {};
+      questoes.forEach((qq, i) => {
+        if (!qq.assunto) return;
+        const ok = respostas[i] === qq.correta;
+        porAssunto[qq.assunto] = (porAssunto[qq.assunto] ?? true) && ok;
+      });
+      const fortes = Object.keys(porAssunto).filter((a) => porAssunto[a]);
+      const fracos = Object.keys(porAssunto).filter((a) => !porAssunto[a]);
+      onFinish({ acertos, total, revisao, fortes, fracos });
     } else {
       setFinalizado(true); // sem navegação ligada, mostra o resultado aqui mesmo
     }
