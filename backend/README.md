@@ -3,7 +3,11 @@
 > **Plataforma Inteligente de Aprendizagem Universitária**  
 > **Centro Universitário Maurício de Nassau (UNINASSAU) — Caruaru/PE**  
 > Curso de Análise e Desenvolvimento de Sistemas | Laboratório de Empreendimentos Inovadores  
-> **Responsáveis Técnicos:** Pedro Francisco Alves Neto & Allan Victor Morais De Lima
+> **Responsáveis Técnicos:** Pedro Francisco Alves Neto & Allan Victor Morais De Lima  
+>  
+> 🚀 **API em Produção (Live):** [https://trilha-mais-backend.onrender.com](https://trilha-mais-backend.onrender.com/)  
+> 📖 **Swagger UI Oficial:** [https://trilha-mais-backend.onrender.com/swagger-ui/index.html](https://trilha-mais-backend.onrender.com/swagger-ui/index.html)  
+> 🗄️ **Banco Conectado:** Neon PostgreSQL 16 (AWS us-east-2)
 
 ---
 

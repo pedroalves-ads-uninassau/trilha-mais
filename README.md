@@ -4,6 +4,12 @@
 > **Centro Universitário Maurício de Nassau (UNINASSAU) — Caruaru/PE**  
 > **Disciplina:** Laboratório de Empreendimentos Inovadores | 4º Período  
 > **Orientador:** Professor Antonio
+>
+> 🚀 **Ambientes em Produção (Online):**  
+> 🌐 **Front-end Web (Vercel):** [https://trilha-mais.vercel.app](https://trilha-mais.vercel.app/)  
+> ⚙️ **Back-end REST API (Render):** [https://trilha-mais-backend.onrender.com](https://trilha-mais-backend.onrender.com/)  
+> 📖 **Swagger UI Interativo:** [https://trilha-mais-backend.onrender.com/swagger-ui/index.html](https://trilha-mais-backend.onrender.com/swagger-ui/index.html)  
+> 🗄️ **Banco de Dados:** Neon PostgreSQL 16 Cloud (Permanente)
 
 O **TRILHA+** é uma solução educacional móvel desenvolvida como projeto acadêmico interdisciplinar para auxiliar estudantes universitários no planejamento, organização e acompanhamento contínuo da sua rotina de estudos. A plataforma centraliza em uma única experiência intuitiva: **gestão de matérias e assuntos com indicadores visuais, cronograma de estudos com agenda integrada, dashboard consolidado de desempenho, tutoria inteligente com IA Generativa multi-turn (Groq Cloud / Llama 3.3 70B), simulados avaliativos dinâmicos com proteção anti-fraude e diagnóstico detalhado de pontos fortes e fracos**.
 
