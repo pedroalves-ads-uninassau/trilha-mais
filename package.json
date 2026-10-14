@@ -1,4 +1,9 @@
 {
+  "name": "trilha-mais",
+  "private": true,
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build"
+  },
   "dependencies": {
     "expo": "57.0.25"
   },

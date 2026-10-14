@@ -191,6 +191,8 @@ As configurações podem ser definidas via variáveis de ambiente ou no arquivo 
 
 | Variável | Valor Padrão | Descrição |
 | :--- | :--- | :--- |
+| `PORT` | `8080` | Porta HTTP do servidor web (mapeada automaticamente pelo Render / Cloud) |
+| `SPRING_DATASOURCE_URL` | `(vazio)` | URL JDBC direta de conexão (sobrescreve `DB_HOST/PORT/NAME`) |
 | `DB_HOST` | `localhost` | Endereço do servidor PostgreSQL |
 | `DB_PORT` | `5432` | Porta do PostgreSQL |
 | `DB_NAME` | `trilha_mais` | Nome do banco de dados |
@@ -201,7 +203,7 @@ As configurações podem ser definidas via variáveis de ambiente ou no arquivo 
 | `GROQ_API_KEY` | `(vazio)` | Chave de API gratuita da Groq Cloud |
 | `GROQ_MODEL` | `llama-3.3-70b-versatile` | Modelo utilizado para tutoria pedagógica |
 
-### Como Executar a Aplicação
+### Como Executar a Aplicação Localmente
 No diretório `backend/`:
 
 ```bash
@@ -218,6 +220,36 @@ No diretório `backend/`:
 ```bash
 ./mvnw package -DskipTests
 ```
+
+---
+
+## ☁️ Como Fazer o Deploy do Back-end no Render
+
+O **Trilha+ Back-end** está preparado para deploy no **[Render.com](https://render.com/)** utilizando o plano gratuito.
+
+### 1. Criar Banco de Dados PostgreSQL no Render:
+- No Render Dashboard: **New +** ➔ **PostgreSQL**.
+- Nome: `trilha-mais-db` | Database: `trilha_mais` | Instance: `Free`.
+- Anote a região e guarde as credenciais geradas (`Internal Database URL` ou `Hostname`, `Port`, `User`, `Password`).
+
+### 2. Criar Web Service do Back-end:
+- No Render Dashboard: **New +** ➔ **Web Service**.
+- Conecte o repositório GitHub `trilha-mais`.
+- Configure os campos principais:
+  - **Root Directory:** `backend`
+  - **Runtime:** `Java`
+  - **Build Command:** `./mvnw clean package -DskipTests`
+  - **Start Command:** `java -jar target/backend-0.0.1-SNAPSHOT.jar`
+  - **Instance Type:** `Free`
+- Adicione as Variáveis de Ambiente no painel do Web Service:
+  - `PORT`: `8080`
+  - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD` (dados do banco criado)
+  - `JWT_SECRET`: chave aleatória HMAC de 256 bits
+  - `JWT_EXPIRATION_MS`: `86400000`
+  - `GROQ_API_KEY`: sua chave Groq Cloud
+  - `GROQ_MODEL`: `llama-3.3-70b-versatile`
+- Clique em **Create Web Service**. Assim que o status for `Live`, teste pelo Swagger:
+  `https://seu-backend.onrender.com/swagger-ui.html`.
 
 ---
 
