@@ -9,7 +9,6 @@
 > 🌐 **Front-end Web (Vercel):** [https://trilha-mais.vercel.app](https://trilha-mais.vercel.app/)  
 > ⚙️ **Back-end REST API (Render):** [https://trilha-mais-backend.onrender.com](https://trilha-mais-backend.onrender.com/)  
 > 📖 **Swagger UI Interativo:** [https://trilha-mais-backend.onrender.com/swagger-ui/index.html](https://trilha-mais-backend.onrender.com/swagger-ui/index.html)  
-> 🗄️ **Banco de Dados:** Neon PostgreSQL 16 Cloud (Permanente)
 
 O **TRILHA+** é uma solução educacional móvel desenvolvida como projeto acadêmico interdisciplinar para auxiliar estudantes universitários no planejamento, organização e acompanhamento contínuo da sua rotina de estudos. A plataforma centraliza em uma única experiência intuitiva: **gestão de matérias e assuntos com indicadores visuais, cronograma de estudos com agenda integrada, dashboard consolidado de desempenho, tutoria inteligente com IA Generativa multi-turn (Groq Cloud / Llama 3.3 70B), simulados avaliativos dinâmicos com proteção anti-fraude e diagnóstico detalhado de pontos fortes e fracos**.
 
@@ -305,100 +304,10 @@ Após iniciar:
 
 ---
 
-## 🚀 Guia de Deploy em Produção (Vercel, Render & Neon)
+## 🚀 Acessos Online
 
-Para colocar a plataforma completa em produção e acessível publicamente na nuvem **sem expiração de 30 dias** e **100% gratuita**, adota-se a seguinte arquitetura de nuvem:
-
-```text
-┌─────────────────────────────────┐        Requisições REST (HTTPS)        ┌──────────────────────────────────┐
-│      Front-end Web (Expo)       │ ─────────────────────────────────────> │     Back-end API (Spring Boot)   │
-│             Vercel              │                                        │          Render Web Service      │
-│  (https://trilha-mais.vercel.app)│ <───────────────────────────────────── │(https://trilha-mais.onrender.com)│
-└─────────────────────────────────┘        Respostas JSON / CORS Liberado   └────────────────┬─────────────────┘
-                                                                                             │
-                                                                                             │ Conexão JDBC / SSL Obrigatório
-                                                                                             ▼
-                                                                           ┌──────────────────────────────────┐
-                                                                           │        Neon PostgreSQL           │
-                                                                           │    (Nuvem Permanente / Free)     │
-                                                                           │   *Não expira após 30 dias*      │
-                                                                           └──────────────────────────────────┘
-```
-
----
-
-### 🗄️ Passo 1: Criar o Banco de Dados PostgreSQL no Neon.tech (Sem Expiração)
-
-1. Acesse o site do **[Neon.tech](https://neon.tech/)** e clique em **"Sign Up"** ➔ **"Continue with GitHub"** (acesse com sua mesma conta do GitHub).
-2. Na criação do projeto:
-   - **Project name:** `trilha-mais`
-   - **Postgres version:** `16`
-   - **Region:** `US East (Ohio)` *(mesma região recomendada para o Render)*
-3. Clique em **"Create project"**.
-4. O banco será criado em poucos segundos. Na tela de conexão (**Dashboard**):
-   - Alterne o seletor de linguagem de `psql` para **`Java`** (ou **`JDBC`**).
-   - O Neon exibirá a URL JDBC pronta com suporte a SSL. Exemplo:
-     ```text
-     jdbc:postgresql://ep-xxxx-xxxx.us-east-2.aws.neon.tech/neondb?sslmode=require
-     ```
-   - Clique na aba **"Parameters"** para visualizar separadamente (caso precise):
-     - **Host:** `ep-xxxx-xxxx.us-east-2.aws.neon.tech`
-     - **Database:** `neondb`
-     - **User:** seu usuário
-     - **Password:** sua senha
-
----
-
-### ☕ Passo 2: Hospedar o Back-end Spring Boot no Render
-
-1. Acesse o **[Render Dashboard](https://dashboard.render.com/)**.
-2. Clique no botão **"New +"** no topo direito e selecione **"Web Service"**.
-3. Selecione **"Build and deploy from a Git repository"** e conecte o repositório **`pedroalves-ads-uninassau/trilha-mais`**.
-4. Configure os parâmetros da aplicação:
-   - **Name:** `trilha-mais-backend` (ou o nome desejado)
-   - **Region:** `Ohio (US East)` *(a mesma do Neon)*
-   - **Branch:** `main`
-   - **Root Directory:** `backend` ⚠️ *(Fundamental: indica a pasta do projeto Java)*
-   - **Runtime:** `Java`
-   - **Build Command:** `./mvnw clean package -DskipTests`
-   - **Start Command:** `java -jar target/backend-0.0.1-SNAPSHOT.jar`
-   - **Instance Type:** `Free`
-5. Na seção **"Environment Variables"**, adicione as seguintes variáveis:
-
-| Chave (Key) | Valor (Value) | Descrição |
-| :--- | :--- | :--- |
-| `PORT` | `8080` | Porta interna mapeada pelo Render para HTTPS |
-| `SPRING_DATASOURCE_URL` | *(URL JDBC gerada no Neon com `?sslmode=require`)* | Conexão segura SSL com o PostgreSQL do Neon |
-| `DB_USERNAME` | *(Usuário do banco no Neon)* | Usuário de autenticação do DB |
-| `DB_PASSWORD` | *(Senha do banco no Neon)* | Senha de autenticação do DB |
-| `JWT_SECRET` | `9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b` | Chave criptográfica HMAC-SHA256 para tokens JWT |
-| `JWT_EXPIRATION_MS` | `86400000` | Duração do token JWT (24 horas) |
-| `GROQ_API_KEY` | *(Sua chave da Groq Cloud `gsk_...`)* | Acesso ao Tutor de IA Llama 3.3 70B |
-| `GROQ_MODEL` | `llama-3.3-70b-versatile` | Modelo LLM utilizado |
-
-6. Clique em **"Create Web Service"**.
-7. O Render compilará o projeto e iniciará o Spring Boot. As tabelas serão criadas automaticamente no Neon pelo Hibernate (`ddl-auto=update`).
-8. Quando o status mudar para **`Live`**, copie a URL gerada (ex: **`https://trilha-mais-backend.onrender.com`**).
-9. **Validação:** Acesse `https://trilha-mais-backend.onrender.com/swagger-ui.html` para certificar-se de que a API está online!
-
----
-
-### 🌐 Passo 3: Hospedar o Front-end Expo Web na Vercel
-
-O repositório já inclui [`vercel.json`](./vercel.json) e scripts de build para exportação web do Expo.
-
-1. Acesse o painel do seu projeto na **[Vercel](https://vercel.com/)** (`trilha-mais`).
-2. Acesse a aba **Settings** ➔ **Environment Variables**:
-   Adicione as seguintes variáveis de ambiente:
-
-| Chave (Key) | Valor (Value) | Observação |
-| :--- | :--- | :--- |
-| `EXPO_PUBLIC_API_URL` | `https://trilha-mais-backend.onrender.com` | **URL do seu backend no Render** (sem barra `/` no final) |
-| `EXPO_PUBLIC_GROQ_API_KEY` | `gsk_...` | Chave de API da Groq Cloud para IA no cliente |
-| `EXPO_PUBLIC_GROQ_MODEL` | `llama-3.3-70b-versatile` | Modelo LLM configurado |
-
-3. Acesse a aba **Deployments**, clique nos três pontinhos (`...`) ao lado do deploy atual e selecione **"Redeploy"** (ou envie um novo commit para a branch `main`).
-4. Pronto! Acesse **`https://trilha-mais.vercel.app`** para utilizar a aplicação completa com persistência permanente no Neon PostgreSQL!
+- 🌐 **Front-end:** [https://trilha-mais.vercel.app](https://trilha-mais.vercel.app/)
+- ⚙️ **Back-end:** [https://trilha-mais-backend.onrender.com](https://trilha-mais-backend.onrender.com/)
 
 ---
 

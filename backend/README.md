@@ -7,7 +7,6 @@
 >  
 > 🚀 **API em Produção (Live):** [https://trilha-mais-backend.onrender.com](https://trilha-mais-backend.onrender.com/)  
 > 📖 **Swagger UI Oficial:** [https://trilha-mais-backend.onrender.com/swagger-ui/index.html](https://trilha-mais-backend.onrender.com/swagger-ui/index.html)  
-> 🗄️ **Banco Conectado:** Neon PostgreSQL 16 (AWS us-east-2)
 
 ---
 
@@ -183,35 +182,17 @@ Com o back-end em execução, acesse pelo navegador:
 
 ---
 
-## ⚙️ Configuração do Ambiente e Execução Local
+## ⚙️ Execução Local
 
 ### Pré-requisitos
-- **Java Development Kit (JDK) 21** instalado (`java -version`).
+- **Java 21 (LTS)** instalado (`java -version`).
 - **PostgreSQL** instalado e ativo (porta `5432`).
 - Banco de dados criado: `CREATE DATABASE trilha_mais;`.
-
-### Variáveis de Ambiente Suportadas
-As configurações podem ser definidas via variáveis de ambiente ou no arquivo `application-local.properties`:
-
-| Variável | Valor Padrão | Descrição |
-| :--- | :--- | :--- |
-| `PORT` | `8080` | Porta HTTP do servidor web (mapeada automaticamente pelo Render / Cloud) |
-| `SPRING_DATASOURCE_URL` | `(vazio)` | URL JDBC direta de conexão (sobrescreve `DB_HOST/PORT/NAME`) |
-| `DB_HOST` | `localhost` | Endereço do servidor PostgreSQL |
-| `DB_PORT` | `5432` | Porta do PostgreSQL |
-| `DB_NAME` | `trilha_mais` | Nome do banco de dados |
-| `DB_USERNAME` | `postgres` | Usuário do PostgreSQL |
-| `DB_PASSWORD` | `1234` | Senha de acesso ao banco |
-| `JWT_SECRET` | `9a8b7c...` | Chave de assinatura criptográfica HMAC-SHA256 |
-| `JWT_EXPIRATION_MS` | `86400000` (24h) | Tempo de expiração do token em milissegundos |
-| `GROQ_API_KEY` | `(vazio)` | Chave de API gratuita da Groq Cloud |
-| `GROQ_MODEL` | `llama-3.3-70b-versatile` | Modelo utilizado para tutoria pedagógica |
 
 ### Como Executar a Aplicação Localmente
 No diretório `backend/`:
 
 ```bash
-# Executa o servidor de desenvolvimento Spring Boot na porta 8080
 ./mvnw spring-boot:run
 ```
 
@@ -224,40 +205,6 @@ No diretório `backend/`:
 ```bash
 ./mvnw package -DskipTests
 ```
-
----
-
-## ☁️ Como Fazer o Deploy do Back-end (Render & Neon)
-
-O **Trilha+ Back-end** está preparado para deploy no **Render** com banco de dados **Neon.tech** (PostgreSQL gratuito que não expira após 30 dias).
-
-### 1. Criar o Banco PostgreSQL no Neon.tech (Sem Expiração):
-- Acesse **[neon.tech](https://neon.tech/)** e entre com o GitHub.
-- Crie um projeto com o nome `trilha-mais` (PostgreSQL 16, região `US East (Ohio)`).
-- No Dashboard do Neon, alterne para a aba **Java / JDBC** e copie a URL de conexão:
-  `jdbc:postgresql://ep-xxxx.us-east-2.aws.neon.tech/neondb?sslmode=require`.
-- Anote o `User` e `Password` exibidos na aba **Parameters**.
-
-### 2. Criar o Web Service do Back-end no Render:
-- No [Render Dashboard](https://dashboard.render.com/): clique em **New +** ➔ **Web Service**.
-- Conecte o repositório GitHub `pedroalves-ads-uninassau/trilha-mais`.
-- Configure os campos principais:
-  - **Root Directory:** `backend` ⚠️
-  - **Runtime:** `Java`
-  - **Build Command:** `./mvnw clean package -DskipTests`
-  - **Start Command:** `java -jar target/backend-0.0.1-SNAPSHOT.jar`
-  - **Instance Type:** `Free`
-- Adicione as Variáveis de Ambiente no painel do Web Service:
-  - `PORT`: `8080`
-  - `SPRING_DATASOURCE_URL`: a URL JDBC do Neon (com `?sslmode=require`)
-  - `DB_USERNAME`: usuário do Neon
-  - `DB_PASSWORD`: senha do Neon
-  - `JWT_SECRET`: `9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b`
-  - `JWT_EXPIRATION_MS`: `86400000`
-  - `GROQ_API_KEY`: sua chave Groq Cloud (`gsk_...`)
-  - `GROQ_MODEL`: `llama-3.3-70b-versatile`
-- Clique em **Create Web Service**. Assim que o status for `Live`, teste pelo Swagger:
-  `https://seu-backend.onrender.com/swagger-ui.html`.
 
 ---
 
