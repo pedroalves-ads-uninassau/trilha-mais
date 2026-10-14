@@ -223,30 +223,34 @@ No diretório `backend/`:
 
 ---
 
-## ☁️ Como Fazer o Deploy do Back-end no Render
+## ☁️ Como Fazer o Deploy do Back-end (Render & Neon)
 
-O **Trilha+ Back-end** está preparado para deploy no **[Render.com](https://render.com/)** utilizando o plano gratuito.
+O **Trilha+ Back-end** está preparado para deploy no **Render** com banco de dados **Neon.tech** (PostgreSQL gratuito que não expira após 30 dias).
 
-### 1. Criar Banco de Dados PostgreSQL no Render:
-- No Render Dashboard: **New +** ➔ **PostgreSQL**.
-- Nome: `trilha-mais-db` | Database: `trilha_mais` | Instance: `Free`.
-- Anote a região e guarde as credenciais geradas (`Internal Database URL` ou `Hostname`, `Port`, `User`, `Password`).
+### 1. Criar o Banco PostgreSQL no Neon.tech (Sem Expiração):
+- Acesse **[neon.tech](https://neon.tech/)** e entre com o GitHub.
+- Crie um projeto com o nome `trilha-mais` (PostgreSQL 16, região `US East (Ohio)`).
+- No Dashboard do Neon, alterne para a aba **Java / JDBC** e copie a URL de conexão:
+  `jdbc:postgresql://ep-xxxx.us-east-2.aws.neon.tech/neondb?sslmode=require`.
+- Anote o `User` e `Password` exibidos na aba **Parameters**.
 
-### 2. Criar Web Service do Back-end:
-- No Render Dashboard: **New +** ➔ **Web Service**.
-- Conecte o repositório GitHub `trilha-mais`.
+### 2. Criar o Web Service do Back-end no Render:
+- No [Render Dashboard](https://dashboard.render.com/): clique em **New +** ➔ **Web Service**.
+- Conecte o repositório GitHub `pedroalves-ads-uninassau/trilha-mais`.
 - Configure os campos principais:
-  - **Root Directory:** `backend`
+  - **Root Directory:** `backend` ⚠️
   - **Runtime:** `Java`
   - **Build Command:** `./mvnw clean package -DskipTests`
   - **Start Command:** `java -jar target/backend-0.0.1-SNAPSHOT.jar`
   - **Instance Type:** `Free`
 - Adicione as Variáveis de Ambiente no painel do Web Service:
   - `PORT`: `8080`
-  - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD` (dados do banco criado)
-  - `JWT_SECRET`: chave aleatória HMAC de 256 bits
+  - `SPRING_DATASOURCE_URL`: a URL JDBC do Neon (com `?sslmode=require`)
+  - `DB_USERNAME`: usuário do Neon
+  - `DB_PASSWORD`: senha do Neon
+  - `JWT_SECRET`: `9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b`
   - `JWT_EXPIRATION_MS`: `86400000`
-  - `GROQ_API_KEY`: sua chave Groq Cloud
+  - `GROQ_API_KEY`: sua chave Groq Cloud (`gsk_...`)
   - `GROQ_MODEL`: `llama-3.3-70b-versatile`
 - Clique em **Create Web Service**. Assim que o status for `Live`, teste pelo Swagger:
   `https://seu-backend.onrender.com/swagger-ui.html`.

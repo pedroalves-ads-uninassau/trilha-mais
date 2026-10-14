@@ -299,9 +299,9 @@ Após iniciar:
 
 ---
 
-## 🚀 Guia de Deploy em Produção (Vercel & Render)
+## 🚀 Guia de Deploy em Produção (Vercel, Render & Neon)
 
-Para colocar a plataforma completa em produção e acessível publicamente na nuvem, adota-se uma arquitetura moderna dividida em dois serviços especializados com integração via variáveis de ambiente:
+Para colocar a plataforma completa em produção e acessível publicamente na nuvem **sem expiração de 30 dias** e **100% gratuita**, adota-se a seguinte arquitetura de nuvem:
 
 ```text
 ┌─────────────────────────────────┐        Requisições REST (HTTPS)        ┌──────────────────────────────────┐
@@ -310,79 +310,76 @@ Para colocar a plataforma completa em produção e acessível publicamente na nu
 │  (https://trilha-mais.vercel.app)│ <───────────────────────────────────── │(https://trilha-mais.onrender.com)│
 └─────────────────────────────────┘        Respostas JSON / CORS Liberado   └────────────────┬─────────────────┘
                                                                                              │
-                                                                                             │ Conexão JDBC / Pool
+                                                                                             │ Conexão JDBC / SSL Obrigatório
                                                                                              ▼
                                                                            ┌──────────────────────────────────┐
-                                                                           │        Render PostgreSQL         │
-                                                                           │      (Managed Relational DB)     │
+                                                                           │        Neon PostgreSQL           │
+                                                                           │    (Nuvem Permanente / Free)     │
+                                                                           │   *Não expira após 30 dias*      │
                                                                            └──────────────────────────────────┘
 ```
 
 ---
 
-### 🗄️ Passo 1: Criar o Banco de Dados PostgreSQL no Render
+### 🗄️ Passo 1: Criar o Banco de Dados PostgreSQL no Neon.tech (Sem Expiração)
 
-1. Acesse sua conta no **[Render.com](https://render.com/)**.
-2. No painel principal, clique no botão **"New +"** no canto superior direito e selecione **"PostgreSQL"**.
-3. Preencha as configurações do banco:
-   - **Name:** `trilha-mais-db`
-   - **Database:** `trilha_mais`
-   - **User:** `trilha_user` (ou mantenha o gerado automaticamente)
-   - **Region:** Escolha a região mais próxima (ex: `Ohio (US East)` ou `Frankfurt (EU Central)`). *Dica: anote a região para usar a mesma no Back-end!*
-   - **PostgreSQL Version:** `16` (ou padrão)
-   - **Instance Type:** `Free`
-4. Clique em **"Create Database"**.
-5. Aguarde o banco ficar com o status **`Available`**.
-6. Na aba **"Info"** do banco criado, localize a seção **"Connections"**:
-   - Copie o **Internal Database URL** (recomendado se o Web Service estiver na mesma região) ou os campos individuais:
-     - **Hostname:** `dpg-xxxx.render.com`
-     - **Port:** `5432`
-     - **Database:** `trilha_mais`
-     - **Username:** seu usuário
+1. Acesse o site do **[Neon.tech](https://neon.tech/)** e clique em **"Sign Up"** ➔ **"Continue with GitHub"** (acesse com sua mesma conta do GitHub).
+2. Na criação do projeto:
+   - **Project name:** `trilha-mais`
+   - **Postgres version:** `16`
+   - **Region:** `US East (Ohio)` *(mesma região recomendada para o Render)*
+3. Clique em **"Create project"**.
+4. O banco será criado em poucos segundos. Na tela de conexão (**Dashboard**):
+   - Alterne o seletor de linguagem de `psql` para **`Java`** (ou **`JDBC`**).
+   - O Neon exibirá a URL JDBC pronta com suporte a SSL. Exemplo:
+     ```text
+     jdbc:postgresql://ep-xxxx-xxxx.us-east-2.aws.neon.tech/neondb?sslmode=require
+     ```
+   - Clique na aba **"Parameters"** para visualizar separadamente (caso precise):
+     - **Host:** `ep-xxxx-xxxx.us-east-2.aws.neon.tech`
+     - **Database:** `neondb`
+     - **User:** seu usuário
      - **Password:** sua senha
 
 ---
 
 ### ☕ Passo 2: Hospedar o Back-end Spring Boot no Render
 
-1. No painel do **Render**, clique em **"New +"** ➔ **"Web Service"**.
-2. Conecte sua conta do GitHub e selecione o repositório **`pedroalves-ads-uninassau/trilha-mais`**.
-3. Defina os parâmetros de deploy:
+1. Acesse o **[Render Dashboard](https://dashboard.render.com/)**.
+2. Clique no botão **"New +"** no topo direito e selecione **"Web Service"**.
+3. Selecione **"Build and deploy from a Git repository"** e conecte o repositório **`pedroalves-ads-uninassau/trilha-mais`**.
+4. Configure os parâmetros da aplicação:
    - **Name:** `trilha-mais-backend` (ou o nome desejado)
-   - **Region:** A mesma região selecionada para o banco PostgreSQL (ex: `Ohio`)
+   - **Region:** `Ohio (US East)` *(a mesma do Neon)*
    - **Branch:** `main`
-   - **Root Directory:** `backend` *(Obrigatório! O projeto Java reside nessa subpasta)*
+   - **Root Directory:** `backend` ⚠️ *(Fundamental: indica a pasta do projeto Java)*
    - **Runtime:** `Java`
    - **Build Command:** `./mvnw clean package -DskipTests`
    - **Start Command:** `java -jar target/backend-0.0.1-SNAPSHOT.jar`
    - **Instance Type:** `Free`
-4. Na seção **"Environment Variables"**, adicione as seguintes variáveis:
+5. Na seção **"Environment Variables"**, adicione as seguintes variáveis:
 
 | Chave (Key) | Valor (Value) | Descrição |
 | :--- | :--- | :--- |
-| `PORT` | `8080` | Porta interna da aplicação (o Render mapeia para 443 HTTPS) |
-| `DB_HOST` | Hostname do banco copiado no Passo 1 | Host do PostgreSQL Render |
-| `DB_PORT` | `5432` | Porta padrão do PostgreSQL |
-| `DB_NAME` | `trilha_mais` | Nome do banco criado |
-| `DB_USERNAME` | Usuário do banco copiado no Passo 1 | Usuário de autenticação do DB |
-| `DB_PASSWORD` | Senha do banco copiada no Passo 1 | Senha de autenticação do DB |
+| `PORT` | `8080` | Porta interna mapeada pelo Render para HTTPS |
+| `SPRING_DATASOURCE_URL` | *(URL JDBC gerada no Neon com `?sslmode=require`)* | Conexão segura SSL com o PostgreSQL do Neon |
+| `DB_USERNAME` | *(Usuário do banco no Neon)* | Usuário de autenticação do DB |
+| `DB_PASSWORD` | *(Senha do banco no Neon)* | Senha de autenticação do DB |
 | `JWT_SECRET` | `9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b` | Chave criptográfica HMAC-SHA256 para tokens JWT |
 | `JWT_EXPIRATION_MS` | `86400000` | Duração do token JWT (24 horas) |
-| `GROQ_API_KEY` | Sua chave de API da Groq Cloud (`gsk_...`) | Acesso ao Tutor de IA Llama 3.3 70B |
+| `GROQ_API_KEY` | *(Sua chave da Groq Cloud `gsk_...`)* | Acesso ao Tutor de IA Llama 3.3 70B |
 | `GROQ_MODEL` | `llama-3.3-70b-versatile` | Modelo LLM utilizado |
 
-> **Alternativa com URL direta:** Se preferir, você pode definir apenas a variável `SPRING_DATASOURCE_URL` com a **Internal Database URL** do PostgreSQL (lembrando de usar o prefixo `jdbc:postgresql://...`).
-
-5. Clique em **"Create Web Service"**.
-6. O Render iniciará a compilação do Maven e a inicialização do Spring Boot.
-7. Quando o log exibir `Started BackendApplication in X seconds` e o status mudar para **`Live`**, copie a URL gerada (ex: **`https://trilha-mais-backend.onrender.com`**).
-8. **Validação:** Acesse no navegador `https://trilha-mais-backend.onrender.com/swagger-ui.html` para certificar-se de que a API e o Swagger estão online e com as tabelas criadas automaticamente pelo Hibernate!
+6. Clique em **"Create Web Service"**.
+7. O Render compilará o projeto e iniciará o Spring Boot. As tabelas serão criadas automaticamente no Neon pelo Hibernate (`ddl-auto=update`).
+8. Quando o status mudar para **`Live`**, copie a URL gerada (ex: **`https://trilha-mais-backend.onrender.com`**).
+9. **Validação:** Acesse `https://trilha-mais-backend.onrender.com/swagger-ui.html` para certificar-se de que a API está online!
 
 ---
 
 ### 🌐 Passo 3: Hospedar o Front-end Expo Web na Vercel
 
-O repositório já conta com o arquivo [`vercel.json`](./vercel.json) e scripts de build configurados na raiz e na pasta `frontend/`, permitindo que a Vercel compile a aplicação React Native Web com o comando `expo export --platform web`.
+O repositório já inclui [`vercel.json`](./vercel.json) e scripts de build para exportação web do Expo.
 
 1. Acesse o painel do seu projeto na **[Vercel](https://vercel.com/)** (`trilha-mais`).
 2. Acesse a aba **Settings** ➔ **Environment Variables**:
@@ -395,8 +392,7 @@ O repositório já conta com o arquivo [`vercel.json`](./vercel.json) e scripts 
 | `EXPO_PUBLIC_GROQ_MODEL` | `llama-3.3-70b-versatile` | Modelo LLM configurado |
 
 3. Acesse a aba **Deployments**, clique nos três pontinhos (`...`) ao lado do deploy atual e selecione **"Redeploy"** (ou envie um novo commit para a branch `main`).
-4. A Vercel executará o script de exportação estática do Expo e publicará a aplicação.
-5. Pronto! Acesse **`https://trilha-mais.vercel.app`** para utilizar a aplicação com interface web responsiva, navegação fluida, conexão direta ao backend Spring Boot e banco PostgreSQL!
+4. Pronto! Acesse **`https://trilha-mais.vercel.app`** para utilizar a aplicação completa com persistência permanente no Neon PostgreSQL!
 
 ---
 
