@@ -2,12 +2,16 @@ package com.trilhamais.backend.service;
 
 import com.trilhamais.backend.dto.PerformanceRecommendationResponse;
 import com.trilhamais.backend.dto.PerformanceSummaryResponse;
+import com.trilhamais.backend.dto.ProgressOverviewResponse;
+import com.trilhamais.backend.dto.SubjectPerformanceResponse;
 import com.trilhamais.backend.dto.RecommendedMaterialDto;
 import com.trilhamais.backend.dto.TopicPerformanceResponse;
 import com.trilhamais.backend.model.*;
 import com.trilhamais.backend.repository.QuizAnswerRepository;
 import com.trilhamais.backend.repository.QuizRepository;
 import com.trilhamais.backend.repository.StudyMaterialRepository;
+import com.trilhamais.backend.repository.SubjectRepository;
+import com.trilhamais.backend.repository.TopicRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,15 +25,24 @@ public class PerformanceService {
     private final QuizAnswerRepository quizAnswerRepository;
     private final StudyMaterialRepository studyMaterialRepository;
     private final GroqAiService groqAiService;
+    private final SubjectRepository subjectRepository;
+    private final TopicRepository topicRepository;
+    private final StudyActivityService studyActivityService;
 
     public PerformanceService(QuizRepository quizRepository,
                               QuizAnswerRepository quizAnswerRepository,
                               StudyMaterialRepository studyMaterialRepository,
-                              GroqAiService groqAiService) {
+                              GroqAiService groqAiService,
+                              SubjectRepository subjectRepository,
+                              TopicRepository topicRepository,
+                              StudyActivityService studyActivityService) {
         this.quizRepository = quizRepository;
         this.quizAnswerRepository = quizAnswerRepository;
         this.studyMaterialRepository = studyMaterialRepository;
         this.groqAiService = groqAiService;
+        this.subjectRepository = subjectRepository;
+        this.topicRepository = topicRepository;
+        this.studyActivityService = studyActivityService;
     }
 
     @Transactional(readOnly = true)
@@ -157,6 +170,74 @@ public class PerformanceService {
                 recommendedMaterials,
                 aiStudyPlan,
                 groqAiService.getProviderName()
+        );
+    }
+
+    /**
+     * Dados da tela Progresso: media geral, avaliacoes, assuntos estudados, sequencia,
+     * aproveitamento por materia, melhor materia e materia que precisa de revisao.
+     */
+    @Transactional(readOnly = true)
+    public ProgressOverviewResponse getProgressOverview(User user) {
+        List<QuizAnswer> answers = quizAnswerRepository.findByQuizUserIdAndQuizStatus(user.getId(), QuizStatus.COMPLETED);
+        Map<Long, List<QuizAnswer>> answersBySubject = answers.stream()
+                .collect(Collectors.groupingBy(a -> a.getQuestion().getTopic().getSubject().getId()));
+
+        List<SubjectPerformanceResponse> subjects = new ArrayList<>();
+        int topicsStudied = 0;
+
+        for (Subject subject : subjectRepository.findByUserIdOrderByNameAsc(user.getId())) {
+            topicsStudied += (int) topicRepository.findBySubjectId(subject.getId()).stream()
+                    .filter(t -> "concluido".equalsIgnoreCase(t.getStatus()))
+                    .count();
+
+            List<QuizAnswer> subjectAnswers = answersBySubject.getOrDefault(subject.getId(), List.of());
+            int answered = subjectAnswers.size();
+            int correct = (int) subjectAnswers.stream().filter(QuizAnswer::isCorrect).count();
+            double accuracy = answered > 0 ? Math.round(((double) correct / answered * 100.0) * 10.0) / 10.0 : 0.0;
+
+            subjects.add(new SubjectPerformanceResponse(
+                    subject.getId(),
+                    subject.getName(),
+                    subject.getIcon(),
+                    subject.getColorKey(),
+                    subject.getPrimaryColor(),
+                    answered,
+                    correct,
+                    accuracy,
+                    answered > 0
+            ));
+        }
+
+        // Destaques consideram apenas materias que ja tiveram simulado
+        List<SubjectPerformanceResponse> withData = subjects.stream()
+                .filter(SubjectPerformanceResponse::isHasData)
+                .collect(Collectors.toList());
+        SubjectPerformanceResponse best = withData.stream()
+                .max(Comparator.comparingDouble(SubjectPerformanceResponse::getAccuracyRate))
+                .orElse(null);
+        SubjectPerformanceResponse worst = withData.stream()
+                .min(Comparator.comparingDouble(SubjectPerformanceResponse::getAccuracyRate))
+                .orElse(null);
+        // So indica revisao quando a pior materia e diferente da melhor e esta abaixo de 80%
+        SubjectPerformanceResponse needsReview = (worst != null && worst != best && worst.getAccuracyRate() < 80.0)
+                ? worst
+                : null;
+
+        int totalAnswered = answers.size();
+        int totalCorrect = (int) answers.stream().filter(QuizAnswer::isCorrect).count();
+        double overallAccuracy = totalAnswered > 0
+                ? Math.round(((double) totalCorrect / totalAnswered * 100.0) * 10.0) / 10.0
+                : 0.0;
+
+        return new ProgressOverviewResponse(
+                overallAccuracy,
+                (int) quizRepository.countByUserIdAndStatus(user.getId(), QuizStatus.COMPLETED),
+                topicsStudied,
+                studyActivityService.getCurrentStreak(user),
+                subjects,
+                best,
+                needsReview
         );
     }
 }

@@ -20,13 +20,16 @@ public class DashboardService {
     private final SubjectRepository subjectRepository;
     private final TopicRepository topicRepository;
     private final QuizRepository quizRepository;
+    private final StudyActivityService studyActivityService;
 
     public DashboardService(SubjectService subjectService, SubjectRepository subjectRepository,
-                            TopicRepository topicRepository, QuizRepository quizRepository) {
+                            TopicRepository topicRepository, QuizRepository quizRepository,
+                            StudyActivityService studyActivityService) {
         this.subjectService = subjectService;
         this.subjectRepository = subjectRepository;
         this.topicRepository = topicRepository;
         this.quizRepository = quizRepository;
+        this.studyActivityService = studyActivityService;
     }
 
     @Transactional(readOnly = true)
@@ -50,6 +53,8 @@ public class DashboardService {
         String contSubject = null;
         String contTopic = null;
         String contColor = "portugues";
+        Long contSubjectId = null;
+        Long contTopicId = null;
 
         for (SubjectResponse s : subjects) {
             List<Topic> topics = topicRepository.findBySubjectId(s.getId());
@@ -58,6 +63,8 @@ public class DashboardService {
                     contSubject = s.getName();
                     contTopic = t.getName();
                     contColor = s.getColorKey();
+                    contSubjectId = s.getId();
+                    contTopicId = t.getId();
                     break;
                 }
             }
@@ -72,12 +79,14 @@ public class DashboardService {
                 contSubject = first.getName();
                 contTopic = topics.get(0).getName();
                 contColor = first.getColorKey();
+                contSubjectId = first.getId();
+                contTopicId = topics.get(0).getId();
             }
         }
 
-        return new DashboardResponse(
+        DashboardResponse response = new DashboardResponse(
                 user.getName(),
-                user.getStreakDays(),
+                studyActivityService.getCurrentStreak(user),
                 overallProgress,
                 motivationMessage,
                 totalSubjects,
@@ -88,5 +97,8 @@ public class DashboardService {
                 contColor,
                 subjects
         );
+        response.setContinueSubjectId(contSubjectId);
+        response.setContinueTopicId(contTopicId);
+        return response;
     }
 }

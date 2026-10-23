@@ -2,6 +2,7 @@ package com.trilhamais.backend.controller;
 
 import com.trilhamais.backend.dto.PerformanceRecommendationResponse;
 import com.trilhamais.backend.dto.PerformanceSummaryResponse;
+import com.trilhamais.backend.dto.ProgressOverviewResponse;
 import com.trilhamais.backend.dto.TopicPerformanceResponse;
 import com.trilhamais.backend.model.User;
 import com.trilhamais.backend.service.PerformanceService;
@@ -56,5 +57,15 @@ public class PerformanceController {
     public ResponseEntity<PerformanceRecommendationResponse> getRecommendations(@AuthenticationPrincipal User user) {
         PerformanceRecommendationResponse response = performanceService.getRecommendations(user);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Retorna tudo que a tela Progresso exibe: media geral, contadores, desempenho por materia,
+     * melhor materia e materia que precisa de revisao.
+     * GET /api/performance/overview
+     */
+    @GetMapping("/overview")
+    public ResponseEntity<ProgressOverviewResponse> getOverview(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(performanceService.getProgressOverview(user));
     }
 }

@@ -1,5 +1,6 @@
 package com.trilhamais.backend.dto;
 
+import java.time.LocalDate;
 import jakarta.validation.constraints.NotBlank;
 
 public class ScheduleRequest {
@@ -10,13 +11,19 @@ public class ScheduleRequest {
     private String subjectName;
     private String colorKey;
     private String icon;
-    private int daysAhead = 0;
+    // Integer (e nao int) para aceitar JSON sem esse campo: o Jackson 3 usa o construtor e recusaria null em int
+    private Integer daysAhead = 0;
     private String scheduledTime;
+
+    // Opcionais: ligam o compromisso a materia/assunto cadastrados e definem a data exata (senao usa daysAhead)
+    private Long subjectId;
+    private Long topicId;
+    private LocalDate scheduledDate;
 
     public ScheduleRequest() {
     }
 
-    public ScheduleRequest(String title, String subjectName, String colorKey, String icon, int daysAhead, String scheduledTime) {
+    public ScheduleRequest(String title, String subjectName, String colorKey, String icon, Integer daysAhead, String scheduledTime) {
         this.title = title;
         this.subjectName = subjectName;
         this.colorKey = colorKey;
@@ -58,10 +65,10 @@ public class ScheduleRequest {
     }
 
     public int getDaysAhead() {
-        return daysAhead;
+        return daysAhead != null ? daysAhead : 0;
     }
 
-    public void setDaysAhead(int daysAhead) {
+    public void setDaysAhead(Integer daysAhead) {
         this.daysAhead = daysAhead;
     }
 
@@ -71,5 +78,29 @@ public class ScheduleRequest {
 
     public void setScheduledTime(String scheduledTime) {
         this.scheduledTime = scheduledTime;
+    }
+
+    public Long getSubjectId() {
+        return subjectId;
+    }
+
+    public void setSubjectId(Long subjectId) {
+        this.subjectId = subjectId;
+    }
+
+    public Long getTopicId() {
+        return topicId;
+    }
+
+    public void setTopicId(Long topicId) {
+        this.topicId = topicId;
+    }
+
+    public LocalDate getScheduledDate() {
+        return scheduledDate;
+    }
+
+    public void setScheduledDate(LocalDate scheduledDate) {
+        this.scheduledDate = scheduledDate;
     }
 }
