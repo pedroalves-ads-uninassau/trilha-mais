@@ -108,7 +108,8 @@ Com o back-end em execução, acesse pelo navegador:
 | Método | Endpoint | Protegido? | Descrição |
 | :--- | :--- | :---: | :--- |
 | `GET` | `/api/schedules` | Sim | Lista compromissos de estudo ordenados cronologicamente |
-| `POST` | `/api/schedules` | Sim | Cria novo compromisso de estudo |
+| `POST` | `/api/schedules` | Sim | Cria compromisso (pode ligar a `subjectId`/`topicId` e definir `scheduledDate`) |
+| `PUT` | `/api/schedules/{id}` | Sim | Edita compromisso (título, data, horário, matéria/assunto) |
 | `PATCH` | `/api/schedules/{id}/toggle` | Sim | Alterna status de conclusão do compromisso |
 | `DELETE` | `/api/schedules/{id}` | Sim | Exclui compromisso |
 
@@ -117,8 +118,14 @@ Com o back-end em execução, acesse pelo navegador:
 | :--- | :--- | :---: | :--- |
 | `POST` | `/api/users/register` | Não | Cadastra um novo estudante |
 | `POST` | `/api/auth/login` | Não | Autentica e retorna o JWT |
+| `POST` | `/api/auth/forgot-password` | Não | Envia código de 6 dígitos por e-mail para recuperar a senha |
+| `POST` | `/api/auth/reset-password` | Não | Troca a senha usando o código recebido |
 | `GET` | `/api/users/profile` | Sim | Retorna os dados do estudante autenticado |
 | `GET` | `/api/users/me` | Sim | Perfil completo com métricas de desempenho e ofensiva |
+| `PUT` | `/api/users/me` | Sim | Edita nome e avatar |
+| `PUT` | `/api/users/me/password` | Sim | Troca a senha (exige a senha atual) |
+| `GET` | `/api/users/me/settings` | Sim | Configurações (notificações e tema) |
+| `PUT` | `/api/users/me/settings` | Sim | Atualiza notificações e tema (`light`/`dark`) |
 
 ### 4. Matérias e Disciplinas
 | Método | Endpoint | Protegido? | Descrição |
@@ -144,9 +151,9 @@ Com o back-end em execução, acesse pelo navegador:
 | :--- | :--- | :---: | :--- |
 | `GET` | `/api/topics/{topicId}/materials` | Sim | Lista materiais didáticos do tópico |
 | `POST` | `/api/topics/{topicId}/materials` | Sim | Adiciona material (SUMMARY, NOTES, TEXT, ARTICLE) |
-| `GET` | `/api/study-materials/{id}` | Sim | Consulta material por ID |
-| `PUT` | `/api/study-materials/{id}` | Sim | Atualiza conteúdo do material |
-| `DELETE` | `/api/study-materials/{id}` | Sim | Exclui o material |
+| `GET` | `/api/materials/{id}` | Sim | Consulta material por ID |
+| `PUT` | `/api/materials/{id}` | Sim | Atualiza conteúdo do material |
+| `DELETE` | `/api/materials/{id}` | Sim | Exclui o material |
 
 ### 7. Banco de Questões
 | Método | Endpoint | Protegido? | Descrição |
@@ -171,13 +178,15 @@ Com o back-end em execução, acesse pelo navegador:
 | `POST` | `/api/ai/chat` | Sim | **Chat conversacional multi-turn** com retenção de histórico |
 | `POST` | `/api/ai/ask` | Sim | Tira dúvidas pontuais com a IA |
 | `POST` | `/api/ai/summarize` | Sim | Sintetiza textos e gera tópicos de revisão |
+| `GET` | `/api/ai/chat/history?subjectId=` | Sim | Histórico salvo do chat (opcionalmente por matéria) |
+| `DELETE` | `/api/ai/chat/history?subjectId=` | Sim | Apaga o histórico do chat |
 
 ### 10. Resultados e Desempenho
 | Método | Endpoint | Protegido? | Descrição |
 | :--- | :--- | :---: | :--- |
 | `GET` | `/api/performance/summary` | Sim | Resumo acumulado de acertos, erros e média de notas |
 | `GET` | `/api/performance/topics` | Sim | Diagnóstico por assunto com nível de domínio (CRITICAL/MASTERED) |
-| `GET` | `/api/performance/history` | Sim | Histórico cronológico decrescente de simulados finalizados |
+| `GET` | `/api/performance/overview` | Sim | Tela Progresso: média geral, por matéria, melhor matéria e "precisa revisar" |
 | `GET` | `/api/performance/recommendations` | Sim | Recomendações didáticas e plano de estudos da IA |
 
 ---

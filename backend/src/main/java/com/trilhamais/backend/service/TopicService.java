@@ -3,6 +3,7 @@ package com.trilhamais.backend.service;
 import com.trilhamais.backend.dto.TopicRequest;
 import com.trilhamais.backend.dto.TopicResponse;
 import com.trilhamais.backend.exception.ResourceNotFoundException;
+import com.trilhamais.backend.model.ActivityType;
 import com.trilhamais.backend.model.Subject;
 import com.trilhamais.backend.model.Topic;
 import com.trilhamais.backend.model.User;
@@ -21,10 +22,13 @@ public class TopicService {
 
     private final TopicRepository topicRepository;
     private final SubjectRepository subjectRepository;
+    private final StudyActivityService studyActivityService;
 
-    public TopicService(TopicRepository topicRepository, SubjectRepository subjectRepository) {
+    public TopicService(TopicRepository topicRepository, SubjectRepository subjectRepository,
+                        StudyActivityService studyActivityService) {
         this.topicRepository = topicRepository;
         this.subjectRepository = subjectRepository;
+        this.studyActivityService = studyActivityService;
     }
 
     /**
@@ -97,8 +101,18 @@ public class TopicService {
         Topic topic = topicRepository.findByIdAndSubjectUserId(topicId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Assunto não encontrado com o id: " + topicId));
 
-        topic.setStatus(status.trim().toLowerCase());
+        String normalized = status.trim().toLowerCase();
+        if (!List.of("pendente", "andamento", "concluido").contains(normalized)) {
+            throw new IllegalArgumentException("Status inválido. Use 'pendente', 'andamento' ou 'concluido'.");
+        }
+
+        topic.setStatus(normalized);
         Topic updated = topicRepository.save(topic);
+
+        // Comecar ou concluir um assunto conta como dia de estudo (sequencia)
+        if (!"pendente".equals(normalized)) {
+            studyActivityService.registerActivity(user, ActivityType.TOPIC);
+        }
         return toTopicResponse(updated);
     }
 

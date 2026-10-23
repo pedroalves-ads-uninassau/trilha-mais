@@ -20,6 +20,10 @@ public class DashboardResponse {
 
     private List<SubjectResponse> subjects;
 
+    // Ids do card "Continuar de onde parou" para o app abrir o assunto direto
+    private Long continueSubjectId;
+    private Long continueTopicId;
+
     public DashboardResponse() {
     }
 
@@ -125,5 +129,21 @@ public class DashboardResponse {
 
     public void setSubjects(List<SubjectResponse> subjects) {
         this.subjects = subjects;
+    }
+
+    public Long getContinueSubjectId() {
+        return continueSubjectId;
+    }
+
+    public void setContinueSubjectId(Long continueSubjectId) {
+        this.continueSubjectId = continueSubjectId;
+    }
+
+    public Long getContinueTopicId() {
+        return continueTopicId;
+    }
+
+    public void setContinueTopicId(Long continueTopicId) {
+        this.continueTopicId = continueTopicId;
     }
 }

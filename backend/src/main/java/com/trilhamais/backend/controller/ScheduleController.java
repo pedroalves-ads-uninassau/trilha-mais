@@ -43,6 +43,18 @@ public class ScheduleController {
     }
 
     /**
+     * Edita um compromisso da agenda.
+     * PUT /api/schedules/{id}
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<ScheduleResponse> updateSchedule(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long id,
+            @Valid @RequestBody ScheduleRequest request) {
+        return ResponseEntity.ok(scheduleService.updateSchedule(user, id, request));
+    }
+
+    /**
      * Alterna o estado de conclusão (pendente/concluído) de um compromisso da agenda.
      * PATCH /api/schedules/{id}/toggle
      */

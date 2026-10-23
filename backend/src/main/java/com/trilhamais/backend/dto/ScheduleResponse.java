@@ -1,5 +1,6 @@
 package com.trilhamais.backend.dto;
 
+import java.time.LocalDate;
 public class ScheduleResponse {
 
     private Long id;
@@ -10,6 +11,11 @@ public class ScheduleResponse {
     private int daysAhead;
     private String scheduledTime;
     private boolean completed;
+
+    // Data real do compromisso e ligacao com materia/assunto (daysAhead e recalculado a partir da data)
+    private LocalDate scheduledDate;
+    private Long subjectId;
+    private Long topicId;
 
     public ScheduleResponse() {
     }
@@ -88,5 +94,29 @@ public class ScheduleResponse {
 
     public void setCompleted(boolean completed) {
         this.completed = completed;
+    }
+
+    public LocalDate getScheduledDate() {
+        return scheduledDate;
+    }
+
+    public void setScheduledDate(LocalDate scheduledDate) {
+        this.scheduledDate = scheduledDate;
+    }
+
+    public Long getSubjectId() {
+        return subjectId;
+    }
+
+    public void setSubjectId(Long subjectId) {
+        this.subjectId = subjectId;
+    }
+
+    public Long getTopicId() {
+        return topicId;
+    }
+
+    public void setTopicId(Long topicId) {
+        this.topicId = topicId;
     }
 }
