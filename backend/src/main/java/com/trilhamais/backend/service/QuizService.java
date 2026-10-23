@@ -22,6 +22,7 @@ public class QuizService {
     private final TopicRepository topicRepository;
     private final SubjectRepository subjectRepository;
     private final QuestionService questionService;
+    private final StudyActivityService studyActivityService;
 
     public QuizService(QuizRepository quizRepository,
                        QuizQuestionRepository quizQuestionRepository,
@@ -30,7 +31,8 @@ public class QuizService {
                        QuestionOptionRepository questionOptionRepository,
                        TopicRepository topicRepository,
                        SubjectRepository subjectRepository,
-                       QuestionService questionService) {
+                       QuestionService questionService,
+                       StudyActivityService studyActivityService) {
         this.quizRepository = quizRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.quizAnswerRepository = quizAnswerRepository;
@@ -39,6 +41,7 @@ public class QuizService {
         this.topicRepository = topicRepository;
         this.subjectRepository = subjectRepository;
         this.questionService = questionService;
+        this.studyActivityService = studyActivityService;
     }
 
     @Transactional
@@ -178,6 +181,9 @@ public class QuizService {
         quiz.setStatus(QuizStatus.COMPLETED);
         quiz.setCompletedAt(LocalDateTime.now());
         quizRepository.save(quiz);
+
+        // Simulado finalizado conta como dia de estudo (sequencia)
+        studyActivityService.registerActivity(user, ActivityType.QUIZ);
 
         Map<String, Boolean> topicMap = new HashMap<>();
         for (QuizQuestion qq : quizQuestions) {

@@ -89,7 +89,7 @@ O aplicativo móvel foi desenvolvido em React Native com TypeScript e Expo, prop
 
 ### Módulos e Telas:
 
-> ⚠️ As telas ainda usam dados de exemplo (mocks em `src/Mocks`). A ligação com a API do back-end está em andamento — veja [Status da Integração](#-status-da-integração-e-pendências-do-back-end).
+> ⚠️ As telas ainda usam dados de exemplo (mocks em `src/Mocks`). A ligação com a API do back-end está em andamento — veja [Status da Integração](#-status-da-integração-e-pendências).
 
 1. **Autenticação:** Telas de `Login`, `Cadastro` e `RecuperacaoSenha`.
 2. **Dashboard / Home (`Home.tsx`):**
@@ -172,7 +172,11 @@ Resumo das tabelas (PostgreSQL, geradas pelo Hibernate):
 | `questions` / `question_options` | Banco de questões e alternativas | `topic_id` / `question_id` |
 | `quizzes` | Simulados (`IN_PROGRESS` / `COMPLETED`) | `user_id`, `topic_id` ou `subject_id` |
 | `quiz_questions` / `quiz_answers` | Questões sorteadas e respostas marcadas | `quiz_id`, `question_id` |
-| `schedules` | Compromissos da agenda | `user_id` |
+| `schedules` | Compromissos da agenda | `user_id`, `subject_id`, `topic_id` |
+| `study_activities` | Dias em que o estudante estudou (base da sequência 🔥) | `user_id` |
+| `password_reset_tokens` | Códigos de recuperação de senha (só o hash) | `user_id` |
+| `user_settings` | Notificações e tema do Perfil | `user_id` |
+| `chat_messages` | Histórico do chat com a IA | `user_id`, `subject_id` |
 
 ```mermaid
 erDiagram
@@ -187,35 +191,40 @@ erDiagram
     quizzes ||--o{ quiz_answers : recebe
     questions ||--o{ quiz_questions : aparece
     questions ||--o{ quiz_answers : respondida
+    users ||--o{ study_activities : estuda
+    users ||--o{ password_reset_tokens : solicita
+    users ||--|| user_settings : configura
+    users ||--o{ chat_messages : conversa
 ```
 
 ---
 
-## 🚧 Status da Integração e Pendências do Back-end
+## 🚧 Status da Integração e Pendências
 
-Comparação entre as telas do front-end e o que a API já entrega (23/10/2026).
+Comparação entre as telas do front-end e o que a API entrega (atualizado em 23/10/2026).
 
-**Já pronto no back-end:** login e cadastro, dashboard da Home, matérias, assuntos e status, materiais, banco de questões, simulados com correção e pontos fortes/fracos, chat com IA, agenda e resumo de desempenho.
+**Back-end: tudo que as telas pedem já existe na API.** Itens adicionados em 23/10/2026:
 
-**Falta no back-end:**
-
-| # | Tela | O que falta |
-| :---: | :--- | :--- |
-| 1 | Recuperar senha | Endpoints `POST /api/auth/forgot-password` e `POST /api/auth/reset-password`, tabela `password_reset_tokens` e envio de e-mail. |
-| 2 | Home / Perfil / Progresso (🔥 sequência) | O campo `streak_days` existe, mas nunca é atualizado. Falta a regra que conta os dias seguidos de estudo (tabela `study_activities`). |
-| 3 | Progresso | Desempenho **por matéria**, "Melhor matéria", "Precisa revisar" e total de assuntos estudados (ex.: `GET /api/performance/subjects`). |
-| 4 | Perfil | Editar nome/avatar (`PUT /api/users/me`), trocar senha e salvar Notificações e Tema (tabela `user_settings`). |
-| 5 | Agenda | Editar compromisso (`PUT /api/schedules/{id}`) e ligar o compromisso à matéria/assunto (`subject_id`, `topic_id`) em vez de texto solto. |
-| 6 | Chat com IA | Histórico das conversas não é salvo (tabela `chat_messages`, opcional). |
+| Tela | O que foi feito no back-end |
+| :--- | :--- |
+| Recuperar senha | `POST /api/auth/forgot-password` envia código de 6 dígitos (vale 30 min, até 5 tentativas, só o hash fica no banco) e `POST /api/auth/reset-password` troca a senha. Sem servidor de e-mail configurado, o código aparece no log do back-end. |
+| Home / Perfil / Progresso (🔥) | A sequência de dias agora é calculada de verdade (tabela `study_activities`). Conta quando o estudante finaliza um simulado, começa/conclui um assunto, conclui um compromisso da agenda ou usa o chat. |
+| Progresso | `GET /api/performance/overview`: média geral, avaliações, assuntos estudados, sequência, aproveitamento por matéria, melhor matéria e "precisa revisar". |
+| Perfil | Editar nome/avatar (`PUT /api/users/me`), trocar senha (`PUT /api/users/me/password`) e Notificações/Tema (`/api/users/me/settings`). |
+| Agenda | Editar compromisso (`PUT /api/schedules/{id}`), ligação com matéria/assunto (`subjectId`, `topicId`) e data real gravada: "Hoje"/"Amanhã" (`daysAhead`) é recalculado a cada dia. Corrigido erro 400 quando o app não enviava `daysAhead`. |
+| Chat com IA | Histórico salvo (`GET`/`DELETE /api/ai/chat/history`), com `subjectId` opcional no `POST /api/ai/chat`. |
+| Home | O card "Continuar de onde parou" agora traz `continueSubjectId` e `continueTopicId`. |
+| Assuntos | `PATCH /api/topics/{id}/status` recusa status fora de `pendente`, `andamento` e `concluido`. |
 
 **Falta no front-end (para usar a API):**
 
 - Criar o serviço de chamadas à API (`src/services/api.ts`) usando `EXPO_PUBLIC_API_URL` e guardar o token JWT após o login.
-- Trocar os mocks das telas pelos endpoints da tabela acima.
-- O chat chama a Groq direto do app, com a chave no front. O certo é usar `POST /api/ai/chat`, que já existe no back, para a chave ficar só no servidor.
+- Trocar os mocks das telas pelos endpoints da tabela abaixo.
+- O chat chama a Groq direto do app, com a chave no front. O certo é usar `POST /api/ai/chat`, para a chave ficar só no servidor.
 - O quiz usa questões fixas na tela; deve usar `POST /api/quizzes/generate` com o `topicId` e a quantidade escolhida (10 ou 15).
+- A tela de recuperar senha precisa de um campo para o código de 6 dígitos e a nova senha.
 
-As tabelas propostas estão detalhadas na seção 5 do [`MODELAGEM.md`](./MODELAGEM.md).
+A modelagem de todas as tabelas está no [`MODELAGEM.md`](./MODELAGEM.md).
 
 ---
 
@@ -225,13 +234,20 @@ As tabelas propostas estão detalhadas na seção 5 do [`MODELAGEM.md`](./MODELA
 | :--- | :---: | :--- | :---: | :--- |
 | **Dashboard** | `GET` | `/api/dashboard` | Sim | Resumo consolidado para a tela inicial (ofensiva, matérias, progresso) |
 | **Agenda** | `GET` | `/api/schedules` | Sim | Lista compromissos de estudo ordenados cronologicamente |
-| | `POST` | `/api/schedules` | Sim | Cria novo compromisso de estudo |
+| | `POST` | `/api/schedules` | Sim | Cria compromisso (pode ligar a `subjectId`/`topicId` e definir `scheduledDate`) |
+| | `PUT` | `/api/schedules/{id}` | Sim | Edita compromisso (título, data, horário, matéria/assunto) |
 | | `PATCH`| `/api/schedules/{id}/toggle` | Sim | Alterna status de conclusão do compromisso |
 | | `DELETE`| `/api/schedules/{id}` | Sim | Remove compromisso de estudo |
 | **Autenticação** | `POST` | `/api/users/register` | Não | Cadastra um novo estudante |
 | | `POST` | `/api/auth/login` | Não | Autentica e gera token JWT Bearer |
+| | `POST` | `/api/auth/forgot-password` | Não | Envia código de 6 dígitos por e-mail para recuperar a senha |
+| | `POST` | `/api/auth/reset-password` | Não | Troca a senha usando o código recebido |
 | | `GET` | `/api/users/profile` | Sim | Consulta perfil autenticado |
 | | `GET` | `/api/users/me` | Sim | Perfil completo com métricas de desempenho |
+| | `PUT` | `/api/users/me` | Sim | Edita nome e avatar |
+| | `PUT` | `/api/users/me/password` | Sim | Troca a senha (exige a senha atual) |
+| | `GET` | `/api/users/me/settings` | Sim | Configurações (notificações e tema) |
+| | `PUT` | `/api/users/me/settings` | Sim | Atualiza notificações e tema (`light`/`dark`) |
 | **Matérias** | `GET` | `/api/subjects` | Sim | Lista matérias com cores, ícones e contadores de progresso |
 | | `POST` | `/api/subjects` | Sim | Cadastra nova matéria (suporta colorKey, primaryColor, icon) |
 | | `GET` | `/api/subjects/{id}` | Sim | Detalhes da matéria e lista de seus tópicos |
@@ -245,9 +261,9 @@ As tabelas propostas estão detalhadas na seção 5 do [`MODELAGEM.md`](./MODELA
 | | `DELETE`| `/api/topics/{id}` | Sim | Remove o tópico |
 | **Materiais** | `GET` | `/api/topics/{topicId}/materials` | Sim | Lista materiais didáticos do tópico |
 | | `POST` | `/api/topics/{topicId}/materials` | Sim | Adiciona material didático de apoio |
-| | `GET` | `/api/study-materials/{id}` | Sim | Consulta material por ID |
-| | `PUT` | `/api/study-materials/{id}` | Sim | Atualiza material didático |
-| | `DELETE`| `/api/study-materials/{id}` | Sim | Remove material |
+| | `GET` | `/api/materials/{id}` | Sim | Consulta material por ID |
+| | `PUT` | `/api/materials/{id}` | Sim | Atualiza material didático |
+| | `DELETE`| `/api/materials/{id}` | Sim | Remove material |
 | **Questões** | `POST` | `/api/topics/{topicId}/questions` | Sim | Cadastra questão com alternativas |
 | | `GET` | `/api/topics/{topicId}/questions` | Sim | Lista questões do tópico |
 | | `GET` | `/api/questions/{id}` | Sim | Detalhes da questão com gabarito |
@@ -260,9 +276,11 @@ As tabelas propostas estão detalhadas na seção 5 do [`MODELAGEM.md`](./MODELA
 | **Tutor IA** | `POST` | `/api/ai/chat` | Sim | **Chat conversacional multi-turn** com retenção de histórico |
 | | `POST` | `/api/ai/ask` | Sim | Tira dúvidas pontuais sobre o tópico |
 | | `POST` | `/api/ai/summarize` | Sim | Gera resumo didático e tópicos-chave |
+| | `GET` | `/api/ai/chat/history?subjectId=` | Sim | Histórico salvo do chat (opcionalmente por matéria) |
+| | `DELETE`| `/api/ai/chat/history?subjectId=` | Sim | Apaga o histórico do chat |
 | **Performance**| `GET` | `/api/performance/summary` | Sim | Resumo consolidado de acertos e notas |
 | | `GET` | `/api/performance/topics` | Sim | Diagnóstico de domínio por assunto |
-| | `GET` | `/api/performance/history` | Sim | Histórico de avaliações |
+| | `GET` | `/api/performance/overview` | Sim | Tela Progresso: média geral, por matéria, melhor matéria e "precisa revisar" |
 | | `GET` | `/api/performance/recommendations` | Sim | Recomendações e plano de estudo gerado pela IA |
 
 ---
@@ -276,7 +294,7 @@ trilha-mais/
 │   │   ├── config/                       # Segurança, CORS, JWT e OpenAPI
 │   │   ├── controller/                   # 11 Controladores REST (Dashboard, Schedule, Ai, etc.)
 │   │   ├── dto/                          # Objetos de Transferência de Dados (Requests/Responses)
-│   │   ├── model/                        # 10 Entidades JPA + 2 enums (PostgreSQL)
+│   │   ├── model/                        # 14 Entidades JPA + 3 enums (PostgreSQL)
 │   │   ├── exception/                    # Tratamento Global de Exceções RFC 7807
 │   │   ├── repository/                   # Interfaces Spring Data JPA
 │   │   └── service/                      # Serviços de Regra de Negócio e IA Groq

@@ -4,8 +4,8 @@ Modelagem do banco **PostgreSQL** do Trilha+, gerada a partir das entidades JPA 
 (`backend/src/main/java/com/trilhamais/backend/model`). As tabelas são criadas pelo Hibernate
 (`spring.jpa.hibernate.ddl-auto=update`), então este documento é a referência do que existe hoje.
 
-> Atualizado em 23/10/2026. A seção 5 traz as tabelas **propostas** para cobrir as telas do front que
-> ainda não têm suporte no back-end (elas **ainda não existem** no código).
+> Atualizado em 23/10/2026: entraram as tabelas `study_activities`, `password_reset_tokens`,
+> `user_settings` e `chat_messages`, e a agenda passou a ter `subject_id` e `topic_id` (seção 5).
 
 ---
 
@@ -22,7 +22,11 @@ Modelagem do banco **PostgreSQL** do Trilha+, gerada a partir das entidades JPA 
 | **Simulado** (`quizzes`) | Avaliação gerada para o estudante sobre um assunto ou uma matéria. |
 | **Questão do Simulado** (`quiz_questions`) | Quais questões caíram no simulado e em que ordem. |
 | **Resposta** (`quiz_answers`) | Alternativa marcada pelo estudante em cada questão do simulado. |
-| **Compromisso** (`schedules`) | Sessão de estudo marcada na agenda (data, horário, concluído ou não). |
+| **Compromisso** (`schedules`) | Sessão de estudo marcada na agenda (data, horário, concluído ou não), ligada opcionalmente a uma matéria/assunto. |
+| **Dia de Estudo** (`study_activities`) | Registro de que o estudante estudou num dia (base da sequência 🔥). |
+| **Código de Recuperação** (`password_reset_tokens`) | Código de 6 dígitos para criar nova senha (só o hash é salvo). |
+| **Configurações** (`user_settings`) | Preferências do Perfil: notificações e tema. |
+| **Mensagem do Chat** (`chat_messages`) | Histórico de perguntas e respostas com o tutor de IA. |
 
 **Relacionamentos**
 
@@ -32,6 +36,9 @@ Modelagem do banco **PostgreSQL** do Trilha+, gerada a partir das entidades JPA 
 - Uma **questão** tem várias **alternativas**.
 - Um **simulado** é de um assunto **ou** de uma matéria, tem várias **questões do simulado** e várias **respostas**.
 - **Questão do simulado** e **resposta** ligam o simulado à questão (tabelas associativas N:N).
+- Um **compromisso** pode apontar para uma **matéria** e/ou um **assunto**.
+- Um **usuário** tem vários **dias de estudo**, **códigos de recuperação** e **mensagens do chat**, e no máximo um registro de **configurações**.
+- Uma **mensagem do chat** pode estar ligada a uma **matéria** (contexto da conversa).
 
 ---
 
@@ -53,6 +60,13 @@ erDiagram
     quizzes ||--o{ quiz_answers : "recebe"
     questions ||--o{ quiz_answers : "respondida em"
     question_options |o--o{ quiz_answers : "marcada em"
+    subjects |o--o{ schedules : "agendada"
+    topics |o--o{ schedules : "agendado"
+    users ||--o{ study_activities : "estuda em"
+    users ||--o{ password_reset_tokens : "solicita"
+    users ||--o| user_settings : "configura"
+    users ||--o{ chat_messages : "conversa"
+    subjects |o--o{ chat_messages : "contexto"
 
     users {
         bigint id PK
@@ -138,6 +152,37 @@ erDiagram
         varchar scheduled_time
         boolean completed
         bigint user_id FK
+        bigint subject_id FK
+        bigint topic_id FK
+        timestamp created_at
+    }
+    study_activities {
+        bigint id PK
+        bigint user_id FK
+        date activity_date
+        varchar activity_type
+    }
+    password_reset_tokens {
+        bigint id PK
+        bigint user_id FK
+        varchar token_hash
+        timestamp expires_at
+        timestamp used_at
+        int attempts
+        timestamp created_at
+    }
+    user_settings {
+        bigint id PK
+        bigint user_id FK
+        boolean notifications_enabled
+        varchar theme
+    }
+    chat_messages {
+        bigint id PK
+        bigint user_id FK
+        bigint subject_id FK
+        varchar role
+        text content
         timestamp created_at
     }
 ```
@@ -149,12 +194,16 @@ erDiagram
 | `topics.status` | `pendente` (padrão), `andamento`, `concluido` |
 | `study_materials.type` | `SUMMARY`, `NOTES` (padrão), `TEXT`, `ARTICLE` |
 | `quizzes.status` | `IN_PROGRESS` (padrão), `COMPLETED` |
+| `study_activities.activity_type` | `QUIZ`, `TOPIC`, `SCHEDULE`, `CHAT` |
+| `user_settings.theme` | `light` (padrão), `dark` |
+| `chat_messages.role` | `user`, `assistant` |
 
 **Regras de exclusão (cascata pelo JPA)**
 
 - Apagar um **usuário** apaga as matérias dele (e, em cadeia, assuntos, materiais e questões).
 - Apagar uma **matéria** apaga os assuntos; apagar um **assunto** apaga materiais e questões.
 - Apagar uma **questão** apaga as alternativas; apagar um **simulado** apaga as questões sorteadas e as respostas.
+- No banco (`ON DELETE`): apagar um **usuário** apaga dias de estudo, códigos, configurações e mensagens do chat; apagar uma **matéria** ou **assunto** só desliga (`SET NULL`) os compromissos e mensagens que apontavam para ela.
 
 ---
 
@@ -258,7 +307,48 @@ CREATE TABLE schedules (
     scheduled_time  VARCHAR(10),                      -- ex.: '14:00'
     completed       BOOLEAN      NOT NULL DEFAULT FALSE,
     user_id         BIGINT       NOT NULL REFERENCES users(id),
+    subject_id      BIGINT       REFERENCES subjects(id) ON DELETE SET NULL,
+    topic_id        BIGINT       REFERENCES topics(id)   ON DELETE SET NULL,
     created_at      TIMESTAMP(6) NOT NULL
+);
+
+-- Dias de estudo (sequência 🔥 na Home, Perfil e Progresso)
+CREATE TABLE study_activities (
+    id             BIGSERIAL PRIMARY KEY,
+    user_id        BIGINT      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    activity_date  DATE        NOT NULL,
+    activity_type  VARCHAR(30) NOT NULL
+                   CHECK (activity_type IN ('QUIZ', 'TOPIC', 'SCHEDULE', 'CHAT')),
+    UNIQUE (user_id, activity_date, activity_type)
+);
+
+-- Recuperação de senha (tela RecuperacaoSenha)
+CREATE TABLE password_reset_tokens (
+    id          BIGSERIAL PRIMARY KEY,
+    user_id     BIGINT       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash  VARCHAR(64)  NOT NULL,                -- SHA-256 do código de 6 dígitos
+    expires_at  TIMESTAMP(6) NOT NULL,                -- 30 minutos após o pedido
+    used_at     TIMESTAMP(6),
+    attempts    INTEGER      NOT NULL DEFAULT 0,      -- máximo de 5 tentativas
+    created_at  TIMESTAMP(6) NOT NULL
+);
+
+-- Configurações do Perfil (Notificações e Tema)
+CREATE TABLE user_settings (
+    id                     BIGSERIAL PRIMARY KEY,
+    user_id                BIGINT      NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    notifications_enabled  BOOLEAN     NOT NULL DEFAULT TRUE,
+    theme                  VARCHAR(10) NOT NULL DEFAULT 'light'   -- light | dark
+);
+
+-- Histórico do Chat com IA
+CREATE TABLE chat_messages (
+    id          BIGSERIAL PRIMARY KEY,
+    user_id     BIGINT       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    subject_id  BIGINT       REFERENCES subjects(id) ON DELETE SET NULL,
+    role        VARCHAR(10)  NOT NULL,                 -- user | assistant
+    content     TEXT         NOT NULL,
+    created_at  TIMESTAMP(6) NOT NULL
 );
 ```
 
@@ -269,96 +359,20 @@ CREATE TABLE schedules (
 | Tela do app | Tabelas usadas | Endpoint |
 |---|---|---|
 | Login / Cadastro | `users` | `POST /api/auth/login`, `POST /api/users/register` |
-| Recuperar senha | — (**não existe**) | — |
-| Home (Início) | `users`, `subjects`, `topics`, `quizzes` | `GET /api/dashboard` |
-| Agenda | `schedules` | `GET/POST /api/schedules`, `PATCH /{id}/toggle`, `DELETE /{id}` |
+| Recuperar senha | `users`, `password_reset_tokens` | `POST /api/auth/forgot-password`, `POST /api/auth/reset-password` |
+| Home (Início) | `users`, `subjects`, `topics`, `quizzes`, `study_activities` | `GET /api/dashboard` |
+| Agenda | `schedules`, `subjects`, `topics` | `GET/POST /api/schedules`, `PUT /{id}`, `PATCH /{id}/toggle`, `DELETE /{id}` |
 | Matérias / Matéria | `subjects`, `topics` | `/api/subjects`, `/api/subjects/{id}/topics` |
 | Assuntos | `topics`, `study_materials` | `/api/topics/{id}`, `PATCH /api/topics/{id}/status` |
 | Quiz / Resultado | `quizzes`, `quiz_questions`, `quiz_answers`, `questions`, `question_options` | `/api/quizzes/generate`, `/{id}/submit`, `/{id}/result` |
-| Chat com IA | — (não salva histórico) | `POST /api/ai/chat` |
-| Progresso | `quizzes`, `quiz_answers` | `/api/performance/summary`, `/topics`, `/recommendations` |
-| Perfil | `users` | `GET /api/users/me` |
+| Chat com IA | `chat_messages` | `POST /api/ai/chat`, `GET/DELETE /api/ai/chat/history` |
+| Progresso | `quizzes`, `quiz_answers`, `subjects`, `topics`, `study_activities` | `/api/performance/overview`, `/summary`, `/topics`, `/recommendations` |
+| Perfil | `users`, `user_settings`, `study_activities` | `GET/PUT /api/users/me`, `PUT /api/users/me/password`, `GET/PUT /api/users/me/settings` |
 
 ---
 
-## 5. Tabelas Propostas (pendências do back-end)
+## 5. Histórico de Alterações
 
-Para atender às telas do front que ainda não têm suporte no back. **Ainda não implementadas.**
-
-```mermaid
-erDiagram
-    users ||--o{ password_reset_tokens : "solicita"
-    users ||--o{ study_activities : "estuda em"
-    users ||--|| user_settings : "configura"
-    users ||--o{ chat_messages : "conversa"
-    subjects |o--o{ schedules : "agendada"
-    topics |o--o{ schedules : "agendado"
-
-    password_reset_tokens {
-        bigint id PK
-        bigint user_id FK
-        varchar token UK
-        timestamp expires_at
-        timestamp used_at
-    }
-    study_activities {
-        bigint id PK
-        bigint user_id FK
-        date activity_date
-        varchar activity_type
-    }
-    user_settings {
-        bigint user_id PK
-        boolean notifications_enabled
-        varchar theme
-    }
-    chat_messages {
-        bigint id PK
-        bigint user_id FK
-        bigint subject_id FK
-        varchar role
-        text content
-        timestamp created_at
-    }
-```
-
-```sql
--- Recuperar senha (tela RecuperacaoSenha)
-CREATE TABLE password_reset_tokens (
-    id          BIGSERIAL PRIMARY KEY,
-    user_id     BIGINT       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    token       VARCHAR(255) NOT NULL UNIQUE,          -- guardar o hash do token
-    expires_at  TIMESTAMP(6) NOT NULL,
-    used_at     TIMESTAMP(6)
-);
-
--- Sequência de dias de estudo (🔥 na Home, Perfil e Progresso)
-CREATE TABLE study_activities (
-    id             BIGSERIAL PRIMARY KEY,
-    user_id        BIGINT      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    activity_date  DATE        NOT NULL,
-    activity_type  VARCHAR(30) NOT NULL,               -- QUIZ, TOPIC, SCHEDULE, CHAT
-    UNIQUE (user_id, activity_date, activity_type)
-);
-
--- Configurações do Perfil (Notificações e Tema)
-CREATE TABLE user_settings (
-    user_id                BIGINT      PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    notifications_enabled  BOOLEAN     NOT NULL DEFAULT TRUE,
-    theme                  VARCHAR(10) NOT NULL DEFAULT 'light'   -- light | dark
-);
-
--- Histórico do Chat com IA (opcional)
-CREATE TABLE chat_messages (
-    id          BIGSERIAL PRIMARY KEY,
-    user_id     BIGINT       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    subject_id  BIGINT       REFERENCES subjects(id) ON DELETE SET NULL,
-    role        VARCHAR(10)  NOT NULL,                 -- user | assistant
-    content     TEXT         NOT NULL,
-    created_at  TIMESTAMP(6) NOT NULL DEFAULT NOW()
-);
-
--- Agenda ligada de verdade à matéria/assunto (hoje é só texto em subject_name)
-ALTER TABLE schedules ADD COLUMN subject_id BIGINT REFERENCES subjects(id) ON DELETE SET NULL;
-ALTER TABLE schedules ADD COLUMN topic_id   BIGINT REFERENCES topics(id)   ON DELETE SET NULL;
-```
+| Data | Alteração |
+|---|---|
+| 23/10/2026 | Novas tabelas `study_activities`, `password_reset_tokens`, `user_settings` e `chat_messages`; colunas `subject_id` e `topic_id` em `schedules`. O Hibernate (`ddl-auto=update`) cria tudo sozinho ao subir o back-end; nenhum dado existente é apagado. |

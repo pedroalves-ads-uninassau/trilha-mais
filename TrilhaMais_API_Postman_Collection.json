@@ -94,6 +94,140 @@
               "path": ["api", "users", "me"]
             }
           }
+        },
+        {
+          "name": "Recuperar Senha — Enviar Código por E-mail",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/forgot-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "forgot-password"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"pedro.alves@uninassau.edu.br\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Recuperar Senha — Trocar Senha com Código",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "reset-password"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"pedro.alves@uninassau.edu.br\",\n  \"code\": \"123456\",\n  \"newPassword\": \"novaSenha123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Editar Perfil (nome e avatar)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Pedro Alves\",\n  \"avatarEmoji\": \"🚀\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Trocar Senha (logado)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me", "password"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"senhaForte123\",\n  \"newPassword\": \"novaSenha123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Consultar Configurações (Notificações e Tema)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/settings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me", "settings"]
+            }
+          }
+        },
+        {
+          "name": "Atualizar Configurações (Notificações e Tema)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/settings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me", "settings"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notificationsEnabled\": true,\n  \"theme\": \"dark\"\n}"
+            }
+          }
         }
       ]
     },
@@ -383,6 +517,56 @@
               "path": ["api", "schedules", "1"]
             }
           }
+        },
+        {
+          "name": "Adicionar Compromisso Ligado a Matéria/Assunto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/schedules",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "schedules"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Revisar Variações linguísticas\",\n  \"topicId\": 1,\n  \"scheduledDate\": \"2026-10-24\",\n  \"scheduledTime\": \"14:00\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Editar Compromisso da Agenda (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/schedules/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "schedules", "1"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Revisão adiantada\",\n  \"subjectId\": 1,\n  \"daysAhead\": 0,\n  \"scheduledTime\": \"09:00\"\n}"
+            }
+          }
         }
       ]
     },
@@ -405,7 +589,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Olá! Pode me dar 3 exemplos práticos de metáfora e metonímia em redações do ENEM?\"\n    }\n  ]\n}"
+              "raw": "{\n  \"subjectId\": 1,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Olá! Pode me dar 3 exemplos práticos de metáfora e metonímia em redações do ENEM?\"\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/ai/chat",
@@ -461,6 +645,52 @@
               "raw": "{{baseUrl}}/api/ai/summarize",
               "host": ["{{baseUrl}}"],
               "path": ["api", "ai", "summarize"]
+            }
+          }
+        },
+        {
+          "name": "Histórico do Chat (por matéria)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/chat/history?subjectId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "chat", "history"],
+              "query": [
+                {
+                  "key": "subjectId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Apagar Histórico do Chat (por matéria)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/chat/history?subjectId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "chat", "history"],
+              "query": [
+                {
+                  "key": "subjectId",
+                  "value": "1"
+                }
+              ]
             }
           }
         }
@@ -606,6 +836,23 @@
               "raw": "{{baseUrl}}/api/performance/recommendations",
               "host": ["{{baseUrl}}"],
               "path": ["api", "performance", "recommendations"]
+            }
+          }
+        },
+        {
+          "name": "Visão Geral da Tela Progresso",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/performance/overview",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "performance", "overview"]
             }
           }
         }
