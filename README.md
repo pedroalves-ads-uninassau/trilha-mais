@@ -87,7 +87,10 @@ O aplicativo móvel foi desenvolvido em React Native com TypeScript e Expo, prop
 - **Estilização:** StyleSheet nativo e temas centralizados (`tokens.css`, `screenTheme.ts`)
 - **Variáveis de Ambiente:** Suporte a `.env` com template `frontend/.env.example`
 
-### Módulos e Telas Integradas:
+### Módulos e Telas:
+
+> ⚠️ As telas ainda usam dados de exemplo (mocks em `src/Mocks`). A ligação com a API do back-end está em andamento — veja [Status da Integração](#-status-da-integração-e-pendências-do-back-end).
+
 1. **Autenticação:** Telas de `Login`, `Cadastro` e `RecuperacaoSenha`.
 2. **Dashboard / Home (`Home.tsx`):**
    - Ofensiva de estudos em dias (`streakDays`), card "Continuar de onde parou".
@@ -154,6 +157,68 @@ O back-end foi construído com arquitetura robusta, segura e orientada a serviç
 
 ---
 
+## 🗄️ Modelagem do Banco de Dados
+
+A modelagem completa (conceitual, lógica com diagrama ER e física em SQL) está em **[`MODELAGEM.md`](./MODELAGEM.md)**.
+
+Resumo das tabelas (PostgreSQL, geradas pelo Hibernate):
+
+| Tabela | Descrição | Ligações |
+| :--- | :--- | :--- |
+| `users` | Estudantes (e-mail único, senha BCrypt, sequência, avatar) | — |
+| `subjects` | Matérias com cor e ícone | `user_id` |
+| `topics` | Assuntos (`pendente`, `andamento`, `concluido`) | `subject_id` |
+| `study_materials` | Resumos, anotações, textos e artigos | `topic_id` |
+| `questions` / `question_options` | Banco de questões e alternativas | `topic_id` / `question_id` |
+| `quizzes` | Simulados (`IN_PROGRESS` / `COMPLETED`) | `user_id`, `topic_id` ou `subject_id` |
+| `quiz_questions` / `quiz_answers` | Questões sorteadas e respostas marcadas | `quiz_id`, `question_id` |
+| `schedules` | Compromissos da agenda | `user_id` |
+
+```mermaid
+erDiagram
+    users ||--o{ subjects : possui
+    users ||--o{ quizzes : realiza
+    users ||--o{ schedules : agenda
+    subjects ||--o{ topics : contem
+    topics ||--o{ study_materials : tem
+    topics ||--o{ questions : tem
+    questions ||--o{ question_options : tem
+    quizzes ||--o{ quiz_questions : sorteia
+    quizzes ||--o{ quiz_answers : recebe
+    questions ||--o{ quiz_questions : aparece
+    questions ||--o{ quiz_answers : respondida
+```
+
+---
+
+## 🚧 Status da Integração e Pendências do Back-end
+
+Comparação entre as telas do front-end e o que a API já entrega (23/10/2026).
+
+**Já pronto no back-end:** login e cadastro, dashboard da Home, matérias, assuntos e status, materiais, banco de questões, simulados com correção e pontos fortes/fracos, chat com IA, agenda e resumo de desempenho.
+
+**Falta no back-end:**
+
+| # | Tela | O que falta |
+| :---: | :--- | :--- |
+| 1 | Recuperar senha | Endpoints `POST /api/auth/forgot-password` e `POST /api/auth/reset-password`, tabela `password_reset_tokens` e envio de e-mail. |
+| 2 | Home / Perfil / Progresso (🔥 sequência) | O campo `streak_days` existe, mas nunca é atualizado. Falta a regra que conta os dias seguidos de estudo (tabela `study_activities`). |
+| 3 | Progresso | Desempenho **por matéria**, "Melhor matéria", "Precisa revisar" e total de assuntos estudados (ex.: `GET /api/performance/subjects`). |
+| 4 | Perfil | Editar nome/avatar (`PUT /api/users/me`), trocar senha e salvar Notificações e Tema (tabela `user_settings`). |
+| 5 | Agenda | Editar compromisso (`PUT /api/schedules/{id}`) e ligar o compromisso à matéria/assunto (`subject_id`, `topic_id`) em vez de texto solto. |
+| 6 | Chat com IA | Histórico das conversas não é salvo (tabela `chat_messages`, opcional). |
+
+**Falta no front-end (para usar a API):**
+
+- Criar o serviço de chamadas à API (`src/services/api.ts`) usando `EXPO_PUBLIC_API_URL` e guardar o token JWT após o login.
+- Trocar os mocks das telas pelos endpoints da tabela acima.
+- O chat chama a Groq direto do app, com a chave no front. O certo é usar `POST /api/ai/chat`, que já existe no back, para a chave ficar só no servidor.
+- O quiz usa questões fixas na tela; deve usar `POST /api/quizzes/generate` com o `topicId` e a quantidade escolhida (10 ou 15).
+
+As tabelas propostas estão detalhadas na seção 5 do [`MODELAGEM.md`](./MODELAGEM.md).
+
+---
+
 ## 📋 Catálogo Completo de Endpoints REST
 
 | Módulo | Método | Endpoint | Protegido? | Descrição |
@@ -211,7 +276,7 @@ trilha-mais/
 │   │   ├── config/                       # Segurança, CORS, JWT e OpenAPI
 │   │   ├── controller/                   # 11 Controladores REST (Dashboard, Schedule, Ai, etc.)
 │   │   ├── dto/                          # Objetos de Transferência de Dados (Requests/Responses)
-│   │   ├── entity/ / model/              # 12 Entidades JPA mapeadas (PostgreSQL)
+│   │   ├── model/                        # 10 Entidades JPA + 2 enums (PostgreSQL)
 │   │   ├── exception/                    # Tratamento Global de Exceções RFC 7807
 │   │   ├── repository/                   # Interfaces Spring Data JPA
 │   │   └── service/                      # Serviços de Regra de Negócio e IA Groq
@@ -239,6 +304,7 @@ trilha-mais/
 ├── vercel.json                           # Configuração raiz da Vercel para monorepo
 ├── package.json                          # Scripts de orquestração raiz (npm run build)
 ├── TrilhaMais_API_Postman_Collection.json # Coleção oficial do Postman com todos os endpoints
+├── MODELAGEM.md                          # Modelagem do banco (conceitual, lógico e físico)
 ├── .gitignore                            # Arquivos e credenciais ignorados pelo Git
 └── README.md                             # Documentação principal do projeto
 ```
