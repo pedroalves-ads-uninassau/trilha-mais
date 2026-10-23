@@ -1,11 +1,12 @@
 package com.trilhamais.backend.controller;
 
+import com.trilhamais.backend.dto.ChangePasswordRequest;
+import com.trilhamais.backend.dto.MessageResponse;
 import com.trilhamais.backend.dto.RegisterRequest;
+import com.trilhamais.backend.dto.UpdateProfileRequest;
 import com.trilhamais.backend.dto.UserResponse;
-import com.trilhamais.backend.model.QuizStatus;
+import com.trilhamais.backend.dto.UserSettingsDto;
 import com.trilhamais.backend.model.User;
-import com.trilhamais.backend.repository.QuizRepository;
-import com.trilhamais.backend.repository.SubjectRepository;
 import com.trilhamais.backend.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -21,13 +22,9 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
-    private final SubjectRepository subjectRepository;
-    private final QuizRepository quizRepository;
 
-    public UserController(UserService userService, SubjectRepository subjectRepository, QuizRepository quizRepository) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.subjectRepository = subjectRepository;
-        this.quizRepository = quizRepository;
     }
 
     /**
@@ -50,17 +47,49 @@ public class UserController {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        int subjectsCount = (int) subjectRepository.countByUserId(user.getId());
-        int evaluationsCount = (int) quizRepository.countByUserIdAndStatus(user.getId(), QuizStatus.COMPLETED);
+        return ResponseEntity.ok(userService.getProfile(user));
+    }
 
-        return ResponseEntity.ok(new UserResponse(
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getStreakDays(),
-                evaluationsCount,
-                subjectsCount,
-                user.getAvatarEmoji()
-        ));
+    /**
+     * Edita nome e avatar do estudante.
+     * PUT /api/users/me
+     */
+    @PutMapping("/me")
+    public ResponseEntity<UserResponse> updateProfile(
+            @AuthenticationPrincipal User user,
+            @Valid @RequestBody UpdateProfileRequest request) {
+        return ResponseEntity.ok(userService.updateProfile(user, request));
+    }
+
+    /**
+     * Troca a senha do estudante logado (exige a senha atual).
+     * PUT /api/users/me/password
+     */
+    @PutMapping("/me/password")
+    public ResponseEntity<MessageResponse> changePassword(
+            @AuthenticationPrincipal User user,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        userService.changePassword(user, request);
+        return ResponseEntity.ok(new MessageResponse("Senha alterada com sucesso."));
+    }
+
+    /**
+     * Configuracoes do Perfil (Notificacoes e Tema).
+     * GET /api/users/me/settings
+     */
+    @GetMapping("/me/settings")
+    public ResponseEntity<UserSettingsDto> getSettings(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(userService.getSettings(user));
+    }
+
+    /**
+     * Atualiza as configuracoes do Perfil.
+     * PUT /api/users/me/settings
+     */
+    @PutMapping("/me/settings")
+    public ResponseEntity<UserSettingsDto> updateSettings(
+            @AuthenticationPrincipal User user,
+            @RequestBody UserSettingsDto request) {
+        return ResponseEntity.ok(userService.updateSettings(user, request));
     }
 }
