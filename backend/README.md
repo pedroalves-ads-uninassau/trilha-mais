@@ -209,6 +209,11 @@ No diretório `backend/`:
 ```bash
 ./mvnw test
 ```
+Os testes usam o banco `trilha_mais_test` (crie com `CREATE DATABASE trilha_mais_test;`), separado do banco do app. O `DatabaseSchemaTest` testa o próprio banco: tabelas, `UNIQUE`, `FOREIGN KEY`, `CHECK` e `ON DELETE`.
+
+### Scripts SQL
+- `database/schema.sql`: cria as 14 tabelas e restrições (o mesmo que o Hibernate gera).
+- `database/dados-exemplo.sql`: estudante de demonstração (`demo@trilhamais.app` / `123456`) com as matérias, assuntos e agenda das telas do app.
 
 ### Como Gerar o Pacote JAR Executável
 ```bash
