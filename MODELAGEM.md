@@ -209,7 +209,9 @@ erDiagram
 
 ## 3. Modelo Físico (PostgreSQL)
 
-Equivalente ao que o Hibernate gera a partir das entidades.
+Equivalente ao que o Hibernate gera a partir das entidades. O script completo, pronto para rodar, está em
+[`backend/database/schema.sql`](./backend/database/schema.sql), e os dados de demonstração em
+[`backend/database/dados-exemplo.sql`](./backend/database/dados-exemplo.sql).
 
 ```sql
 CREATE TABLE users (

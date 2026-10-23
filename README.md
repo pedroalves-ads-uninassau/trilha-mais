@@ -300,7 +300,8 @@ trilha-mais/
 │   │   └── service/                      # Serviços de Regra de Negócio e IA Groq
 │   ├── src/main/resources/
 │   │   └── application.properties        # Configurações do PostgreSQL, JWT e Groq
-│   ├── src/test/java/                    # Testes Automatizados (Unitários e E2E)
+│   ├── src/test/java/                    # Testes Automatizados (API, E2E e banco de dados)
+│   ├── database/                         # Scripts SQL (schema.sql e dados-exemplo.sql)
 │   ├── pom.xml                           # Dependências Maven (Spring Boot 4, PostgreSQL, JJWT)
 │   └── mvnw                              # Maven Wrapper executável
 │
@@ -336,9 +337,10 @@ trilha-mais/
 #### Pré-requisitos:
 - **Java 21 (LTS)** instalado (`java -version`)
 - **PostgreSQL** instalado e em execução (porta padrão `5432`)
-- Criar o banco de dados no PostgreSQL:
+- Criar os bancos de dados no PostgreSQL (o segundo é só para os testes automatizados):
   ```sql
   CREATE DATABASE trilha_mais;
+  CREATE DATABASE trilha_mais_test;
   ```
 
 #### Passos:
@@ -351,11 +353,26 @@ cd backend
 ```
 O servidor inicializará automaticamente as tabelas e estará acessível em: **`http://localhost:8080`**.
 
+> A senha do PostgreSQL de cada máquina vai no arquivo `backend/src/main/resources/application-local.properties`
+> (`spring.datasource.password=...`), que é ignorado pelo Git.
+
+#### Scripts SQL do banco (`backend/database/`):
+| Arquivo | Para que serve |
+| :--- | :--- |
+| [`schema.sql`](./backend/database/schema.sql) | Cria todas as 14 tabelas, chaves e restrições (o mesmo que o Hibernate gera). Use se quiser montar o banco sem subir o back-end. |
+| [`dados-exemplo.sql`](./backend/database/dados-exemplo.sql) | Cadastra um estudante de demonstração com as matérias, assuntos e agenda das telas do app. Login: `demo@trilhamais.app` / senha `123456`. |
+
+```bash
+psql -U postgres -d trilha_mais -f backend/database/schema.sql         # opcional: o back-end já cria as tabelas
+psql -U postgres -d trilha_mais -f backend/database/dados-exemplo.sql  # dados para demonstração
+```
+
 #### Executando a Suíte de Testes Automatizados:
 ```bash
 cd backend
 ./mvnw test
 ```
+Os testes usam o banco **`trilha_mais_test`** (configurado no `pom.xml`), separado do banco do app: rodar os testes **não apaga** os dados do `trilha_mais`. O `DatabaseSchemaTest` testa o próprio banco: existência das 14 tabelas, `UNIQUE`, `FOREIGN KEY`, `CHECK` e `ON DELETE`.
 
 ---
 
