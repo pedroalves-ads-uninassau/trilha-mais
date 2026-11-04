@@ -25,7 +25,8 @@ export default function Assuntos() {
 
   const iniciarAvaliacao = () => {
     setModalVisivel(false);
-    navigation.navigate('Quiz', {
+    // Alterado aqui: Redirecionando para a tela de 'Chat' que você pediu
+    navigation.navigate('Chat', {
       assunto: assuntoTitulo,
       materia: materiaNome,
       totalQuestoes: qtdQuestoes,

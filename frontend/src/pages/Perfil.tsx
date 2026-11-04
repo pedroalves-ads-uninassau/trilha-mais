@@ -9,17 +9,9 @@ import {
   StatusBar,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import BarraNavegacao, { ChaveAba } from '../components/BarraNavegacao';
 
 export default function Perfil() {
   const navigation = useNavigation<any>();
-
-  const aoMudarAba = (novaAba: ChaveAba) => {
-    if (novaAba === 'inicio') navigation.navigate('Home');
-    if (novaAba === 'agenda') navigation.navigate('Agenda');
-    if (novaAba === 'materias') navigation.navigate('Materias');
-    if (novaAba === 'progresso') navigation.navigate('Progresso');
-  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -111,8 +103,6 @@ export default function Perfil() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-
-      <BarraNavegacao ativa="perfil" aoMudar={aoMudarAba} />
     </SafeAreaView>
   );
 }

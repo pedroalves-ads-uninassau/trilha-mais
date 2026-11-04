@@ -134,15 +134,7 @@ export default function Home() {
           ))}
 
           {/* Continuar de onde parou */}
-          <BannerContinuar
-            dados={mockContinuarEstudando}
-            aoPressionar={() =>
-              navigation.navigate('Assuntos', {
-                titulo: mockContinuarEstudando.nomeAssunto,
-                materiaNome: mockContinuarEstudando.nomeMateria,
-              })
-            }
-          />
+          <BannerContinuar dados={mockContinuarEstudando} />
         </View>
       </ScrollView>
 
