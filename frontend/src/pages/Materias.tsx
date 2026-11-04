@@ -117,6 +117,22 @@ export default function Materias() {
           </TouchableOpacity>
         ))}
 
+        <View style={styles.acoes}>
+          <TouchableOpacity
+            style={styles.botaoAcao}
+            onPress={() => navigation.navigate('Quiz')}
+          >
+            <Text style={styles.botaoAcaoTexto}>Fazer quiz</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.botaoAcao}
+            onPress={() => navigation.navigate('ChatIA')}
+          >
+            <Text style={styles.botaoAcaoTexto}>Tirar dúvidas com a IA</Text>
+          </TouchableOpacity>
+        </View>
+
         <TouchableOpacity
           style={styles.botaoNovaMateria}
           activeOpacity={0.75}
@@ -388,5 +404,19 @@ const styles = StyleSheet.create({
     color: colors.textOnPrimary,
     fontSize: typography.body.fontSize,
     fontWeight: '600',
+  },
+  acoes: {
+    marginTop: spacing.lg,
+    gap: spacing.md,
+  },
+  botaoAcao: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  botaoAcaoTexto: {
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
 });
