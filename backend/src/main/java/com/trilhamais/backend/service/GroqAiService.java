@@ -44,12 +44,12 @@ public class GroqAiService {
     public GroqAiService(
             @Value("${groq.api.key:}") String apiKey,
             @Value("${groq.api.url:https://api.groq.com/openai/v1/chat/completions}") String apiUrl,
-            @Value("${groq.model:llama-3.3-70b-versatile}") String model,
+            @Value("${groq.model:openai/gpt-oss-120b}") String model,
             TopicRepository topicRepository,
             StudyMaterialRepository studyMaterialRepository) {
         this.apiKey = apiKey != null ? apiKey.trim() : "";
         this.apiUrl = (apiUrl != null && !apiUrl.isBlank()) ? apiUrl.trim() : "https://api.groq.com/openai/v1/chat/completions";
-        this.model = (model != null && !model.isBlank()) ? model.trim() : "llama-3.3-70b-versatile";
+        this.model = (model != null && !model.isBlank()) ? model.trim() : "openai/gpt-oss-120b";
         this.topicRepository = topicRepository;
         this.studyMaterialRepository = studyMaterialRepository;
         this.objectMapper = new ObjectMapper();
@@ -157,7 +157,7 @@ public class GroqAiService {
         Map<String, Object> bodyMap = new HashMap<>();
         bodyMap.put("model", model);
         bodyMap.put("temperature", 0.6);
-        bodyMap.put("max_tokens", 800);
+        bodyMap.put("max_tokens", 2000);
 
         List<Map<String, String>> messages = new ArrayList<>();
         messages.add(Map.of("role", "system", "content", systemPrompt));
@@ -251,7 +251,7 @@ public class GroqAiService {
                 Map<String, Object> bodyMap = new HashMap<>();
                 bodyMap.put("model", model);
                 bodyMap.put("temperature", 0.6);
-                bodyMap.put("max_tokens", 800);
+                bodyMap.put("max_tokens", 2000);
 
                 List<Map<String, String>> messages = new ArrayList<>();
                 messages.add(Map.of("role", "system", "content", systemPrompt));

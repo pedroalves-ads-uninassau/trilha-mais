@@ -6,7 +6,7 @@ const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY;
 // Os modelos da Groq mudam com o tempo. Confira os disponíveis em
 // https://console.groq.com/docs/models e troque aqui se precisar.
-const MODELO = process.env.EXPO_PUBLIC_GROQ_MODEL ?? 'llama-3.3-70b-versatile';
+const MODELO = process.env.EXPO_PUBLIC_GROQ_MODEL ?? 'openai/gpt-oss-120b';
 
 export type MensagemChat = { role: 'user' | 'assistant'; content: string };
 
@@ -35,7 +35,7 @@ export async function perguntarGroq(historico: MensagemChat[]): Promise<string> 
         model: MODELO,
         messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...historico.slice(-12)],
         temperature: 0.6,
-        max_tokens: 800,
+        max_tokens: 2000,
       }),
       signal: controller.signal,
     });
