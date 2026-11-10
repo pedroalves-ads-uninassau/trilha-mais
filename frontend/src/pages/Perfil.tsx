@@ -1,4 +1,7 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { usersApi, authApi, UserResponse } from '../services/api';
+
 import {
   View,
   Text,
@@ -8,12 +11,22 @@ import {
   TouchableOpacity,
   StatusBar,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import BarraNavegacao, { ChaveAba } from '../components/BarraNavegacao';
 
 export default function Perfil() {
   const navigation = useNavigation<any>();
+  const [usuario, setUsuario] = useState<UserResponse | null>(null);
 
+  useFocusEffect(
+    useCallback(() => {
+     usersApi.me().then(setUsuario).catch(() => {});
+  }, [])
+);
+
+const sair = async () => {
+  await authApi.logout();
+  navigation.navigate('Login');
+};
   const aoMudarAba = (novaAba: ChaveAba) => {
     if (novaAba === 'inicio') navigation.navigate('Home');
     if (novaAba === 'agenda') navigation.navigate('Agenda');
@@ -47,29 +60,29 @@ export default function Perfil() {
           {/* Avatar do Usuário */}
           <View style={styles.avatarBorder}>
             <View style={styles.avatarBackground}>
-              <Text style={styles.avatarEmoji}>🎓</Text>
+              <Text style={styles.avatarEmoji}>{usuario?.avatarEmoji ?? '🎓'}</Text>
             </View>
           </View>
 
           {/* Informações do Usuário */}
-          <Text style={styles.userName}>Seu Nome</Text>
-          <Text style={styles.userEmail}>Seu@email.com</Text>
+          <Text style={styles.userName}>{usuario?.name ?? ''}</Text>
+          <Text style={styles.userEmail}>{usuario?.email ?? ''}</Text>
         </View>
 
         {/* Card Flutuante de Estatísticas */}
         <View style={styles.statsCard}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>5 🔥</Text>
+            <Text style={styles.statValue}>{usuario?.streakDays ?? 0} 🔥</Text>
             <Text style={styles.statLabel}>Dia de estudo</Text>
           </View>
           
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>8</Text>
+            <Text style={styles.statValue}>{usuario?.evaluationsCount ?? 0}</Text>
             <Text style={styles.statLabel}>Avaliações</Text>
           </View>
           
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>4</Text>
+            <Text style={styles.statValue}>{usuario?.subjectsCount ?? 0}</Text>
             <Text style={styles.statLabel}>Matérias</Text>
           </View>
         </View>
@@ -103,7 +116,7 @@ export default function Perfil() {
           <TouchableOpacity 
             style={styles.menuItem} 
             activeOpacity={0.7}
-            onPress={() => navigation.navigate('Login')}
+            onPress={sair}
           >
             <Text style={styles.menuIcon}>🚪</Text>
             <Text style={[styles.menuText, styles.textDestructive]}>Sair</Text>

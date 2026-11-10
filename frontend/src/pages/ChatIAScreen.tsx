@@ -4,7 +4,7 @@ import {
   KeyboardAvoidingView, Platform, StyleSheet, SafeAreaView,
 } from 'react-native';
 import { c, s, r } from '../theme/screenTheme';
-import { perguntarGroq } from '../services/groq';
+import { aiApi } from '../services/api';
 
 type Autor = 'usuario' | 'ia';
 type Mensagem = { id: string; autor: Autor; texto: string };
@@ -44,7 +44,7 @@ export default function ChatIAScreen({ onBack }: Props) {
     setEstado('digitando');
 
     try {
-      const resposta = await perguntarGroq(
+      const resposta = await aiApi.chat(
         base.map((m) => ({
           role: m.autor === 'usuario' ? ('user' as const) : ('assistant' as const),
           content: m.texto,
@@ -53,8 +53,11 @@ export default function ChatIAScreen({ onBack }: Props) {
       setMensagens((m) => [...m, { id: String(Date.now() + 1), autor: 'ia', texto: resposta }]);
       setEstado('ocioso');
     } catch (e: any) {
-      setErroMsg(e?.message ?? 'Não foi possível obter a resposta.');
-      setEstado('erro');
+      setErroMsg(
+  e?.status === 401
+    ? 'Sua sessão expirou. Entre novamente.'
+    : e?.message ?? 'Não foi possível obter a resposta.',
+);
     }
   }
 

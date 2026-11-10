@@ -24,6 +24,17 @@ export default function Assuntos() {
   const [qtdQuestoes, setQtdQuestoes] = useState<number>(10);
 
   const iniciarAvaliacao = () => {
+  setModalVisivel(false);
+  
+  navigation.navigate('Quiz', {
+    assunto: assuntoTitulo,
+    materia: materiaNome,
+    totalQuestoes: qtdQuestoes,
+    topicId: assuntoId ? Number(assuntoId) : undefined,
+  });
+};
+
+  const assuntoId = () => {
     setModalVisivel(false);
     navigation.navigate('Quiz', {
       assunto: assuntoTitulo,
