@@ -43,15 +43,32 @@ export async function request<T>(path: string, opts: Options = {}): Promise<T> {
     if (token) headers.Authorization = `Bearer ${token}`;
   }
 
-  let res: Response;
-  try {
-    res = await fetch(`${BASE_URL}${path}`, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-    });
-  } catch {
-    throw new ApiError('Não foi possível conectar ao servidor. Confira se a API está no ar.', 0);
+  // O servidor gratuito "dorme" quando fica sem uso e leva até 1 minuto para acordar.
+  // Enquanto ele não responde (falha de rede ou 502/503/504), tenta de novo algumas vezes.
+  const esperas = [3000, 6000, 10000, 15000];
+  let res: Response | null = null;
+
+  for (let tentativa = 0; tentativa <= esperas.length; tentativa++) {
+    try {
+      res = await fetch(`${BASE_URL}${path}`, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      if (![502, 503, 504].includes(res.status)) break;
+    } catch {
+      res = null;
+    }
+    if (tentativa < esperas.length) {
+      await new Promise((resolve) => setTimeout(resolve, esperas[tentativa]));
+    }
+  }
+
+  if (!res) {
+    throw new ApiError(
+      'Não foi possível conectar ao servidor. Ele pode estar iniciando; tente de novo em 1 minuto.',
+      0,
+    );
   }
 
   const text = await res.text();
