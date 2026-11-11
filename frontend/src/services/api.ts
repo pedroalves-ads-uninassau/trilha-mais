@@ -2,7 +2,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 declare const process: { env: Record<string, string | undefined> };
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+// Sem EXPO_PUBLIC_API_URL definida (ex.: build do Vercel), usa a API publicada no Render.
+// Para rodar com o back-end local, defina EXPO_PUBLIC_API_URL=http://localhost:8080 no .env.
+const API_PUBLICADA = 'https://trilha-mais-backend.onrender.com';
+const BASE_URL = (process.env.EXPO_PUBLIC_API_URL || API_PUBLICADA).replace(/\/+$/, '');
 const TOKEN_KEY = '@trilhamais:token';
 
 export const tokenStorage = {
@@ -19,6 +22,12 @@ export class ApiError extends Error {
   }
 }
 
+// Avisa a navegação quando o servidor recusa o token (sessão expirada ou inválida)
+let aoExpirarSessao: (() => void) | null = null;
+export const definirAoExpirarSessao = (fn: (() => void) | null) => {
+  aoExpirarSessao = fn;
+};
+
 type Options = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
@@ -34,17 +43,39 @@ export async function request<T>(path: string, opts: Options = {}): Promise<T> {
     if (token) headers.Authorization = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    throw new ApiError('Não foi possível conectar ao servidor. Confira se a API está no ar.', 0);
+  }
 
   const text = await res.text();
-  const data = text ? JSON.parse(text) : null;
+  let data: any = null;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = null;
+    }
+  }
 
   if (!res.ok) {
-    throw new ApiError(data?.message ?? 'Erro ao comunicar com o servidor', res.status);
+    if (res.status === 401 && auth) {
+      await tokenStorage.clear();
+      aoExpirarSessao?.();
+      throw new ApiError('Sua sessão expirou. Entre novamente.', 401);
+    }
+    // Erros de validação vêm como { message, errors: { campo: 'mensagem' } }
+    const detalhes =
+      data?.errors && typeof data.errors === 'object'
+        ? Object.values(data.errors as Record<string, string>).join(' ')
+        : '';
+    throw new ApiError(detalhes || data?.message || 'Erro ao comunicar com o servidor.', res.status);
   }
   return data as T;
 }
@@ -65,7 +96,16 @@ export const authApi = {
     await tokenStorage.set(res.accessToken);
     return res.user;
   },
+  async register(name: string, email: string, password: string) {
+    await request<UserResponse>('/api/users/register', {
+      method: 'POST',
+      body: { name, email, password },
+      auth: false,
+    });
+    return authApi.login(email, password);
+  },
   logout: () => tokenStorage.clear(),
+  temSessao: async () => Boolean(await tokenStorage.get()),
   forgotPassword: (email: string) =>
     request<{ message: string }>('/api/auth/forgot-password', {
       method: 'POST',
@@ -183,10 +223,18 @@ export const usersApi = {
   updateProfile: (data: { name?: string; avatarEmoji?: string }) =>
     request<UserResponse>('/api/users/me', { method: 'PUT', body: data }),
   changePassword: (currentPassword: string, newPassword: string) =>
-    request<void>('/api/users/me/password', {
+    request<{ message: string }>('/api/users/me/password', {
       method: 'PUT',
       body: { currentPassword, newPassword },
     }),
+  settings: () => request<UserSettings>('/api/users/me/settings'),
+  updateSettings: (data: Partial<UserSettings>) =>
+    request<UserSettings>('/api/users/me/settings', { method: 'PUT', body: data }),
+};
+
+export type UserSettings = {
+  notificationsEnabled: boolean | null;
+  theme: string | null;
 };
 
 // ---------- Progresso ----------
@@ -249,7 +297,22 @@ export const schedulesApi = {
 // ---------- Chat IA ----------
 export type MensagemChat = { role: 'user' | 'assistant'; content: string };
 
+export type ExplicacaoIA = {
+  answer: string;
+  topicName: string | null;
+  modelProvider: string | null;
+  suggestedQuestions: string[] | null;
+};
+
 export const aiApi = {
+  explicarAssunto: (topicId: number, titulo: string) =>
+    request<ExplicacaoIA>('/api/ai/ask', {
+      method: 'POST',
+      body: {
+        topicId,
+        question: `Explique de forma didática e resumida o assunto "${titulo}", com os pontos principais e um exemplo.`,
+      },
+    }),
   chat: async (messages: MensagemChat[], subjectId?: number) => {
     const res = await request<{ reply: string }>('/api/ai/chat', {
       method: 'POST',

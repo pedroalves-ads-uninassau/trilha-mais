@@ -9,9 +9,11 @@ import {
   Platform,
   SafeAreaView,
   ScrollView,
-  StatusBar
+  StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { authApi } from '../services/api';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState<string>('');
@@ -19,8 +21,27 @@ export default function LoginScreen() {
 
   const navigation = useNavigation<any>();
 
-  const handleLogin = () => {
-    navigation.navigate('Home');
+  const [erro, setErro] = useState<string>('');
+  const [carregando, setCarregando] = useState<boolean>(false);
+
+  const handleLogin = async () => {
+    if (carregando) return;
+    if (!email.trim() || !password) {
+      setErro('Informe o e-mail e a senha.');
+      return;
+    }
+
+    try {
+      setCarregando(true);
+      setErro('');
+      await authApi.login(email.trim().toLowerCase(), password);
+      setPassword('');
+      navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+    } catch (e: any) {
+      setErro(e?.message ?? 'Não foi possível entrar.');
+    } finally {
+      setCarregando(false);
+    }
   };
 
   return (
@@ -76,8 +97,12 @@ export default function LoginScreen() {
                 secureTextEntry
                 value={password}
                 onChangeText={setPassword}
+                onSubmitEditing={handleLogin}
+                returnKeyType="go"
               />
             </View>
+
+            {erro ? <Text style={styles.erroTexto}>{erro}</Text> : null}
 
             {/* Esqueceu a senha */}
             <TouchableOpacity 
@@ -89,11 +114,16 @@ export default function LoginScreen() {
 
             {/* Botão Entrar Laranja */}
             <TouchableOpacity 
-              style={styles.button} 
+              style={[styles.button, carregando && { opacity: 0.7 }]} 
               onPress={handleLogin} 
               activeOpacity={0.8}
+              disabled={carregando}
             >
-              <Text style={styles.buttonText}>Entrar</Text>
+              {carregando ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.buttonText}>Entrar</Text>
+              )}
             </TouchableOpacity>
 
             {/* Rodapé Cadastro */}
@@ -104,13 +134,6 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Card de Dica do Protótipo */}
-            <View style={styles.tipCard}>
-              <Text style={styles.tipText}>
-                💡 Toque em "Entrar" para acessar o protótipo
-              </Text>
-            </View>
-
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -119,6 +142,12 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  erroTexto: {
+    color: '#DC2626',
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
   safeArea: {
     flex: 1,
     backgroundColor: '#2563EB',

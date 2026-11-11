@@ -9,21 +9,57 @@ import {
   Platform,
   SafeAreaView,
   ScrollView,
-  StatusBar
+  StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { authApi } from '../services/api';
 
 export default function CadastroScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   
   const [nome, setNome] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [senha, setSenha] = useState<string>('');
   const [confirmarSenha, setConfirmarSenha] = useState<string>('');
 
-  const handleCadastro = () => {
-    console.log('Tentativa de cadastro:', { nome, email, senha, confirmarSenha });
-    // Lógica de cadastro aqui
+  const [erro, setErro] = useState<string>('');
+  const [carregando, setCarregando] = useState<boolean>(false);
+
+  const handleCadastro = async () => {
+    if (carregando) return;
+
+    const nomeLimpo = nome.trim();
+    const emailLimpo = email.trim().toLowerCase();
+
+    if (!nomeLimpo || !emailLimpo || !senha) {
+      setErro('Preencha nome, e-mail e senha.');
+      return;
+    }
+    if (!/^\S+@\S+\.\S+$/.test(emailLimpo)) {
+      setErro('Digite um e-mail válido.');
+      return;
+    }
+    if (senha.length < 6) {
+      setErro('A senha deve ter no mínimo 6 caracteres.');
+      return;
+    }
+    if (senha !== confirmarSenha) {
+      setErro('As senhas não conferem.');
+      return;
+    }
+
+    try {
+      setCarregando(true);
+      setErro('');
+      // Cria a conta e já entra com ela
+      await authApi.register(nomeLimpo, emailLimpo, senha);
+      navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+    } catch (e: any) {
+      setErro(e?.message ?? 'Não foi possível criar a conta.');
+    } finally {
+      setCarregando(false);
+    }
   };
 
   return (
@@ -100,8 +136,19 @@ export default function CadastroScreen() {
               />
             </View>
 
-            <TouchableOpacity style={styles.button} onPress={handleCadastro} activeOpacity={0.8}>
-              <Text style={styles.buttonText}>Criar conta</Text>
+            {erro ? <Text style={styles.erroTexto}>{erro}</Text> : null}
+
+            <TouchableOpacity
+              style={[styles.button, carregando && { opacity: 0.7 }]}
+              onPress={handleCadastro}
+              activeOpacity={0.8}
+              disabled={carregando}
+            >
+              {carregando ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.buttonText}>Criar conta</Text>
+              )}
             </TouchableOpacity>
 
             <Text style={styles.termsText}>
@@ -117,6 +164,12 @@ export default function CadastroScreen() {
 }
 
 const styles = StyleSheet.create({
+  erroTexto: {
+    color: '#DC2626',
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
   safeArea: {
     flex: 1,
     backgroundColor: '#2563EB', 

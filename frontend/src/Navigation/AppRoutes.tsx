@@ -1,5 +1,6 @@
-import React from 'react';
-import { NavigationContainer } from "@react-navigation/native";
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, View } from 'react-native';
+import { NavigationContainer, createNavigationContainerRef } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Login from "../pages/TelaLogin";
 import Home from "../pages/Home";
@@ -15,12 +16,51 @@ import ChatIAScreen from '../pages/ChatIAScreen';
 import QuizScreen from '../pages/TelaQuiz';
 import ResultadoScreen from '../pages/TelaResultado';
 
+import { authApi, definirAoExpirarSessao, usersApi } from '../services/api';
+
 const Stack = createNativeStackNavigator();
+const navegacaoRef = createNavigationContainerRef<any>();
 
 export default function AppRoutes() {
+  const [rotaInicial, setRotaInicial] = useState<'Login' | 'Home' | null>(null);
+
+  useEffect(() => {
+    // Sessão expirada em qualquer tela: volta para o login
+    definirAoExpirarSessao(() => {
+      if (navegacaoRef.isReady()) {
+        navegacaoRef.reset({ index: 0, routes: [{ name: 'Login' }] });
+      }
+    });
+
+    // Se já existe um token válido salvo, entra direto
+    (async () => {
+      if (!(await authApi.temSessao())) {
+        setRotaInicial('Login');
+        return;
+      }
+      try {
+        await usersApi.me();
+        setRotaInicial('Home');
+      } catch {
+        await authApi.logout();
+        setRotaInicial('Login');
+      }
+    })();
+
+    return () => definirAoExpirarSessao(null);
+  }, []);
+
+  if (!rotaInicial) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' }}>
+        <ActivityIndicator size="large" color="#2563EB" />
+      </View>
+    );
+  }
+
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+    <NavigationContainer ref={navegacaoRef}>
+      <Stack.Navigator initialRouteName={rotaInicial} screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Cadastro" component={Cadastro} />
         <Stack.Screen name="RecuperacaoSenha" component={RecuperacaoSenha} />

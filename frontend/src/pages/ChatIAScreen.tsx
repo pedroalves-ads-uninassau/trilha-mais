@@ -33,6 +33,7 @@ export default function ChatIAScreen({ onBack }: Props) {
   async function enviar(texto: string, reenvio = false) {
     const pergunta = texto.trim();
     if (!pergunta || estado === 'digitando') return;
+    if (reenvio && mensagens.length === 0) return;
 
     const nova: Mensagem = { id: String(Date.now()), autor: 'usuario', texto: pergunta };
     const base = reenvio ? mensagens : [...mensagens, nova];
@@ -53,11 +54,9 @@ export default function ChatIAScreen({ onBack }: Props) {
       setMensagens((m) => [...m, { id: String(Date.now() + 1), autor: 'ia', texto: resposta }]);
       setEstado('ocioso');
     } catch (e: any) {
-      setErroMsg(
-  e?.status === 401
-    ? 'Sua sessão expirou. Entre novamente.'
-    : e?.message ?? 'Não foi possível obter a resposta.',
-);
+      // Em 401 o app já volta para o login; nos outros casos mostra o erro com "tentar novamente"
+      setErroMsg(e?.message ?? 'Não foi possível obter a resposta.');
+      setEstado('erro');
     }
   }
 

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -12,14 +13,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 import BarraNavegacao, { ChaveAba } from '../components/BarraNavegacao';
 import CardMateria from '../components/CardMateria';
-import { materiasDetalhadas } from '../Mocks/mockInicio';
-import { mapaCoresMaterias, ChaveCorMateria } from '../theme/CoresMaterias';
+import { subjectsApi, paraMateriaTela } from '../services/api';
+import { mapaCoresMaterias, normalizarChaveCor, ChaveCorMateria } from '../theme/CoresMaterias';
+import { avisar, confirmar } from '../utils/alerta';
 import { colors, radius, spacing, typography } from '../theme/tokens';
-import type { Materia as DadosCardMateria } from '../types/inicio';
 
 const opcoesCor: { chave: ChaveCorMateria; rotulo: string; icone: string }[] = [
   { chave: 'portugues', rotulo: 'Azul', icone: '📘' },
@@ -28,13 +29,31 @@ const opcoesCor: { chave: ChaveCorMateria; rotulo: string; icone: string }[] = [
   { chave: 'biologia', rotulo: 'Verde', icone: '🔬' },
 ];
 
+type MateriaTela = ReturnType<typeof paraMateriaTela>;
+
 export default function Materias() {
   const navigation = useNavigation<any>();
-  const [materias, setMaterias] = useState(materiasDetalhadas);
+  const [materias, setMaterias] = useState<MateriaTela[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
+  const [escolhendoQuiz, setEscolhendoQuiz] = useState(false);
   const [modalVisivel, setModalVisivel] = useState(false);
   const [nomeMateria, setNomeMateria] = useState('');
   const [corSelecionada, setCorSelecionada] = useState<ChaveCorMateria>('portugues');
   const [erroCadastro, setErroCadastro] = useState('');
+
+  // Busca as matérias na API sempre que a tela ganha foco
+  useFocusEffect(
+    useCallback(() => {
+      subjectsApi
+        .list()
+        .then((lista) => setMaterias(lista.map(paraMateriaTela)))
+        .catch((e) => {
+          if (e?.status !== 401) avisar('Erro', e?.message ?? 'Não foi possível carregar as matérias.');
+        })
+        .finally(() => setCarregando(false));
+    }, [])
+  );
 
   const aoMudarAba = (novaAba: ChaveAba) => {
     if (novaAba === 'inicio') navigation.navigate('Home');
@@ -49,7 +68,9 @@ export default function Materias() {
     setErroCadastro('');
   };
 
-  const adicionarMateria = () => {
+  const adicionarMateria = async () => {
+    if (salvando) return;
+
     const nome = nomeMateria.trim();
     if (!nome) {
       setErroCadastro('Digite o nome da matéria.');
@@ -62,22 +83,51 @@ export default function Materias() {
     }
 
     const opcaoCor = opcoesCor.find((opcao) => opcao.chave === corSelecionada)!;
-    const novaMateria = {
-      id: `materia-${Date.now()}`,
-      nome,
-      chaveCor: corSelecionada,
-      corPrimaria: mapaCoresMaterias[corSelecionada].principal,
-      icone: opcaoCor.icone,
-      assuntosTotal: 0,
-      concluidos: 0,
-      emAndamento: 0,
-      pendentes: 0,
-      progresso: 0,
-      assuntosLista: [],
-    };
 
-    setMaterias((listaAtual) => [...listaAtual, novaMateria]);
-    fecharModal();
+    try {
+      setSalvando(true);
+      const criada = await subjectsApi.create({
+        name: nome,
+        colorKey: corSelecionada,
+        primaryColor: mapaCoresMaterias[corSelecionada].principal,
+        icon: opcaoCor.icone,
+      });
+      setMaterias((listaAtual) => [...listaAtual, paraMateriaTela(criada)]);
+      fecharModal();
+    } catch (e: any) {
+      setErroCadastro(e?.message ?? 'Não foi possível criar a matéria.');
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const excluirMateria = async (materia: MateriaTela) => {
+    const confirmado = await confirmar(
+      'Excluir matéria',
+      `Excluir "${materia.nome}" e todos os assuntos dela?`,
+      'Excluir',
+    );
+    if (!confirmado) return;
+
+    try {
+      await subjectsApi.remove(materia.id);
+      setMaterias((listaAtual) => listaAtual.filter((item) => item.id !== materia.id));
+    } catch (e: any) {
+      avisar('Erro', e?.message ?? 'Não foi possível excluir a matéria.');
+    }
+  };
+
+  // O simulado precisa de uma matéria: com uma só vai direto, com várias pergunta qual
+  const fazerQuiz = () => {
+    if (materias.length === 0) {
+      avisar('Cadastre uma matéria', 'Adicione uma matéria para gerar um quiz.');
+      return;
+    }
+    if (materias.length === 1) {
+      navigation.navigate('Quiz', { subjectId: Number(materias[0].id), materia: materias[0].nome });
+      return;
+    }
+    setEscolhendoQuiz(true);
   };
 
   return (
@@ -87,7 +137,7 @@ export default function Materias() {
       <View style={styles.cabecalho}>
         <Text style={styles.titulo}>Matérias</Text>
         <Text style={styles.subtitulo}>
-          {materias.length} matérias cadastradas
+          {materias.length} {materias.length === 1 ? 'matéria cadastrada' : 'matérias cadastradas'}
         </Text>
       </View>
 
@@ -96,17 +146,32 @@ export default function Materias() {
         contentContainerStyle={styles.conteudoScroll}
         showsVerticalScrollIndicator={false}
       >
+        {carregando ? (
+          <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.lg }} />
+        ) : null}
+
+        {!carregando && materias.length === 0 ? (
+          <Text style={styles.textoVazio}>
+            Nenhuma matéria ainda. Toque em "Nova matéria" para começar.
+          </Text>
+        ) : null}
+
+        {materias.length > 0 ? (
+          <Text style={styles.dica}>Segure o dedo sobre uma matéria para excluir.</Text>
+        ) : null}
+
         {materias.map((materia) => (
           <TouchableOpacity
             key={materia.id}
             activeOpacity={0.82}
             onPress={() => navigation.navigate('Materia', materia)}
+            onLongPress={() => excluirMateria(materia)}
           >
             <CardMateria
               materia={{
                 id: materia.id,
                 nome: materia.nome,
-                chaveCor: materia.chaveCor as DadosCardMateria['chaveCor'],
+                chaveCor: normalizarChaveCor(materia.chaveCor),
                 quantidadeAssuntos: materia.assuntosTotal,
                 progresso: materia.progresso,
                 concluidos: materia.concluidos,
@@ -120,7 +185,7 @@ export default function Materias() {
         <View style={styles.acoes}>
           <TouchableOpacity
             style={styles.botaoAcao}
-            onPress={() => navigation.navigate('Quiz')}
+            onPress={fazerQuiz}
           >
             <Text style={styles.botaoAcaoTexto}>Fazer quiz</Text>
           </TouchableOpacity>
@@ -219,18 +284,90 @@ export default function Materias() {
               <TouchableOpacity style={styles.botaoCancelar} onPress={fecharModal}>
                 <Text style={styles.textoCancelar}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.botaoCriar} onPress={adicionarMateria}>
-                <Text style={styles.textoCriar}>Adicionar</Text>
+              <TouchableOpacity
+                style={[styles.botaoCriar, salvando && { opacity: 0.7 }]}
+                onPress={adicionarMateria}
+                disabled={salvando}
+              >
+                <Text style={styles.textoCriar}>{salvando ? 'Salvando...' : 'Adicionar'}</Text>
               </TouchableOpacity>
             </View>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Escolha da matéria para o quiz */}
+      <Modal
+        visible={escolhendoQuiz}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setEscolhendoQuiz(false)}
+      >
+        <View style={styles.fundoModal}>
+          <View style={styles.conteudoModal}>
+            <View style={styles.topoModal}>
+              <View>
+                <Text style={styles.tituloModal}>Fazer quiz</Text>
+                <Text style={styles.subtituloModal}>Escolha a matéria</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.botaoFechar}
+                onPress={() => setEscolhendoQuiz(false)}
+                accessibilityRole="button"
+                accessibilityLabel="Fechar"
+              >
+                <Text style={styles.iconeFechar}>×</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ maxHeight: 320 }}>
+              {materias.map((materia) => (
+                <TouchableOpacity
+                  key={materia.id}
+                  style={styles.opcaoQuiz}
+                  activeOpacity={0.75}
+                  onPress={() => {
+                    setEscolhendoQuiz(false);
+                    navigation.navigate('Quiz', { subjectId: Number(materia.id), materia: materia.nome });
+                  }}
+                >
+                  <Text style={styles.iconeMateria}>{materia.icone}</Text>
+                  <Text style={styles.textoOpcaoQuiz}>{materia.nome}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  textoVazio: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    textAlign: 'center',
+    marginVertical: spacing.lg,
+  },
+  dica: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    marginBottom: spacing.sm,
+  },
+  opcaoQuiz: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  textoOpcaoQuiz: {
+    color: colors.textPrimary,
+    fontSize: 15,
+    fontWeight: '600',
+  },
   areaSegura: {
     flex: 1,
     backgroundColor: colors.surface,

@@ -1,10 +1,15 @@
 import React, { useCallback, useState } from 'react';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { usersApi, authApi, UserResponse } from '../services/api';
+import { avisar, confirmar } from '../utils/alerta';
 
 import {
   View,
   Text,
+  TextInput,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   SafeAreaView,
   ScrollView,
@@ -13,20 +18,90 @@ import {
 } from 'react-native';
 import BarraNavegacao, { ChaveAba } from '../components/BarraNavegacao';
 
+const opcoesAvatar = ['🎓', '📚', '🚀', '🧠', '⭐', '🦉', '💡', '🔥'];
+
 export default function Perfil() {
   const navigation = useNavigation<any>();
   const [usuario, setUsuario] = useState<UserResponse | null>(null);
+  const [notificacoes, setNotificacoes] = useState<boolean>(true);
+
+  // Formulário de configurações (dados do perfil e troca de senha)
+  const [modalVisivel, setModalVisivel] = useState(false);
+  const [nome, setNome] = useState('');
+  const [avatar, setAvatar] = useState('🎓');
+  const [senhaAtual, setSenhaAtual] = useState('');
+  const [novaSenha, setNovaSenha] = useState('');
+  const [erro, setErro] = useState('');
+  const [salvando, setSalvando] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
-     usersApi.me().then(setUsuario).catch(() => {});
-  }, [])
-);
+      usersApi.me().then(setUsuario).catch(() => {});
+      usersApi
+        .settings()
+        .then((config) => setNotificacoes(config.notificationsEnabled ?? true))
+        .catch(() => {});
+    }, [])
+  );
 
-const sair = async () => {
-  await authApi.logout();
-  navigation.navigate('Login');
-};
+  const sair = async () => {
+    const confirmado = await confirmar('Sair', 'Deseja sair da sua conta?', 'Sair');
+    if (!confirmado) return;
+    await authApi.logout();
+    navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+  };
+
+  const abrirConfiguracoes = () => {
+    setNome(usuario?.name ?? '');
+    setAvatar(usuario?.avatarEmoji ?? '🎓');
+    setSenhaAtual('');
+    setNovaSenha('');
+    setErro('');
+    setModalVisivel(true);
+  };
+
+  const salvarConfiguracoes = async () => {
+    if (salvando) return;
+
+    const nomeLimpo = nome.trim();
+    if (!nomeLimpo) {
+      setErro('Digite o seu nome.');
+      return;
+    }
+    const querTrocarSenha = Boolean(senhaAtual || novaSenha);
+    if (querTrocarSenha && (!senhaAtual || novaSenha.length < 6)) {
+      setErro('Para trocar a senha, informe a senha atual e uma nova com no mínimo 6 caracteres.');
+      return;
+    }
+
+    try {
+      setSalvando(true);
+      setErro('');
+      const atualizado = await usersApi.updateProfile({ name: nomeLimpo, avatarEmoji: avatar });
+      setUsuario(atualizado);
+      if (querTrocarSenha) {
+        await usersApi.changePassword(senhaAtual, novaSenha);
+      }
+      setModalVisivel(false);
+      avisar('Pronto', querTrocarSenha ? 'Perfil e senha atualizados.' : 'Perfil atualizado.');
+    } catch (e: any) {
+      if (e?.status !== 401) setErro(e?.message ?? 'Não foi possível salvar.');
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const alternarNotificacoes = async () => {
+    const novoValor = !notificacoes;
+    setNotificacoes(novoValor);
+    try {
+      await usersApi.updateSettings({ notificationsEnabled: novoValor });
+    } catch (e: any) {
+      setNotificacoes(!novoValor);
+      if (e?.status !== 401) avisar('Erro', e?.message ?? 'Não foi possível salvar a preferência.');
+    }
+  };
+
   const aoMudarAba = (novaAba: ChaveAba) => {
     if (novaAba === 'inicio') navigation.navigate('Home');
     if (novaAba === 'agenda') navigation.navigate('Agenda');
@@ -89,25 +164,33 @@ const sair = async () => {
 
         {/* Menu de Opções */}
         <View style={styles.menuContainer}>
-          <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={abrirConfiguracoes}>
             <Text style={styles.menuIcon}>⚙️</Text>
             <Text style={styles.menuText}>Configurações</Text>
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={alternarNotificacoes}>
             <Text style={styles.menuIcon}>🔔</Text>
             <Text style={styles.menuText}>Notificações</Text>
-            <Text style={styles.chevron}>›</Text>
+            <Text style={styles.valorMenu}>{notificacoes ? 'Ativadas' : 'Desativadas'}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            activeOpacity={0.7}
+            onPress={() => avisar('Tema', 'Por enquanto o Trilha+ tem só o tema claro.')}
+          >
             <Text style={styles.menuIcon}>🎨</Text>
             <Text style={styles.menuText}>Tema</Text>
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('ChatIA')}
+          >
             <Text style={styles.menuIcon}>❓</Text>
             <Text style={styles.menuText}>Ajuda e suporte</Text>
             <Text style={styles.chevron}>›</Text>
@@ -126,11 +209,190 @@ const sair = async () => {
       </ScrollView>
 
       <BarraNavegacao ativa="perfil" aoMudar={aoMudarAba} />
+
+      <Modal
+        visible={modalVisivel}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisivel(false)}
+      >
+        <KeyboardAvoidingView
+          style={styles.fundoModal}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={styles.conteudoModal}>
+            <Text style={styles.tituloModal}>Configurações</Text>
+
+            <Text style={styles.rotuloCampo}>Nome</Text>
+            <TextInput
+              style={styles.campo}
+              value={nome}
+              onChangeText={(texto) => {
+                setNome(texto);
+                setErro('');
+              }}
+              placeholder="Seu nome"
+              placeholderTextColor="#9CA3AF"
+              maxLength={80}
+              accessibilityLabel="Nome"
+            />
+
+            <Text style={styles.rotuloCampo}>Avatar</Text>
+            <View style={styles.linhaAvatares}>
+              {opcoesAvatar.map((opcao) => (
+                <TouchableOpacity
+                  key={opcao}
+                  style={[styles.opcaoAvatar, opcao === avatar && styles.opcaoAvatarSelecionada]}
+                  onPress={() => setAvatar(opcao)}
+                  accessibilityLabel={`Avatar ${opcao}`}
+                >
+                  <Text style={{ fontSize: 20 }}>{opcao}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.rotuloCampo}>Trocar senha (opcional)</Text>
+            <TextInput
+              style={styles.campo}
+              value={senhaAtual}
+              onChangeText={(texto) => {
+                setSenhaAtual(texto);
+                setErro('');
+              }}
+              placeholder="Senha atual"
+              placeholderTextColor="#9CA3AF"
+              secureTextEntry
+              accessibilityLabel="Senha atual"
+            />
+            <TextInput
+              style={[styles.campo, { marginTop: 8 }]}
+              value={novaSenha}
+              onChangeText={(texto) => {
+                setNovaSenha(texto);
+                setErro('');
+              }}
+              placeholder="Nova senha"
+              placeholderTextColor="#9CA3AF"
+              secureTextEntry
+              accessibilityLabel="Nova senha"
+            />
+
+            {erro ? <Text style={styles.textoErro}>{erro}</Text> : null}
+
+            <View style={styles.acoesModal}>
+              <TouchableOpacity style={styles.botaoCancelar} onPress={() => setModalVisivel(false)}>
+                <Text style={styles.textoCancelar}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.botaoSalvar, salvando && { opacity: 0.7 }]}
+                onPress={salvarConfiguracoes}
+                disabled={salvando}
+              >
+                <Text style={styles.textoSalvar}>{salvando ? 'Salvando...' : 'Salvar'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  valorMenu: {
+    color: '#6B7280',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  fundoModal: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  conteudoModal: {
+    width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+  },
+  tituloModal: {
+    color: '#151A2D',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  rotuloCampo: {
+    color: '#151A2D',
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  campo: {
+    borderWidth: 1,
+    borderColor: '#E4E7EC',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: '#151A2D',
+    backgroundColor: '#F5F6F9',
+  },
+  linhaAvatares: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  opcaoAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E4E7EC',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  opcaoAvatarSelecionada: {
+    borderColor: '#2F68E9',
+    borderWidth: 2,
+    backgroundColor: '#EFF6FF',
+  },
+  textoErro: {
+    color: '#DC2626',
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 16,
+  },
+  acoesModal: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 24,
+  },
+  botaoCancelar: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#E4E7EC',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  textoCancelar: {
+    color: '#6B7280',
+    fontWeight: '700',
+  },
+  botaoSalvar: {
+    flex: 1,
+    backgroundColor: '#2F68E9',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  textoSalvar: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
   safeArea: {
     flex: 1,
     backgroundColor: '#2F68E9', 

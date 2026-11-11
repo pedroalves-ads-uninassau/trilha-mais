@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Modal,
   Pressable,
   SafeAreaView,
@@ -10,38 +11,96 @@ import {
   View,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { aiApi, topicsApi, TopicStatus } from '../services/api';
+import { avisar } from '../utils/alerta';
 
 export default function Assuntos() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
 
-  // Recebe parâmetros ou usa padrões
-  const assuntoTitulo = route.params?.titulo || 'Variações linguísticas';
-  const materiaNome = route.params?.materiaNome || 'Português';
+  // Dados do assunto escolhido na tela da matéria (ou no banner "continuar")
+  const assuntoId: number | undefined = route.params?.assuntoId
+    ? Number(route.params.assuntoId)
+    : undefined;
+  const assuntoTitulo: string = route.params?.titulo || 'Assunto';
+  const materiaNome: string = route.params?.materiaNome || 'Matéria';
+  const materiaIcone: string = route.params?.materiaIcone || '📔';
+
+  const [status, setStatus] = useState<TopicStatus>(route.params?.status || 'pendente');
+  const [explicacao, setExplicacao] = useState('');
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState('');
+  const [salvandoStatus, setSalvandoStatus] = useState(false);
 
   // Estado do Modal de Avaliação
   const [modalVisivel, setModalVisivel] = useState(false);
   const [qtdQuestoes, setQtdQuestoes] = useState<number>(10);
 
-  const iniciarAvaliacao = () => {
-  setModalVisivel(false);
-  
-  navigation.navigate('Quiz', {
-    assunto: assuntoTitulo,
-    materia: materiaNome,
-    totalQuestoes: qtdQuestoes,
-    topicId: assuntoId ? Number(assuntoId) : undefined,
-  });
-};
+  // Pede a explicação do assunto para a IA do back-end
+  const carregarExplicacao = useCallback(() => {
+    if (!assuntoId) {
+      setCarregando(false);
+      setErro('Abra este assunto pela tela da matéria.');
+      return;
+    }
 
-  const assuntoId = () => {
+    setCarregando(true);
+    setErro('');
+    aiApi
+      .explicarAssunto(assuntoId, assuntoTitulo)
+      .then((resposta) => setExplicacao((resposta.answer ?? '').trim()))
+      .catch((e) => {
+        if (e?.status !== 401) setErro(e?.message ?? 'Não foi possível carregar a explicação.');
+      })
+      .finally(() => setCarregando(false));
+  }, [assuntoId, assuntoTitulo]);
+
+  useEffect(() => {
+    carregarExplicacao();
+  }, [carregarExplicacao]);
+
+  // Ao abrir um assunto pendente, ele passa para "em andamento"
+  useEffect(() => {
+    if (!assuntoId || status !== 'pendente') return;
+    topicsApi
+      .updateStatus(assuntoId, 'andamento')
+      .then((atualizado) => setStatus(atualizado.status))
+      .catch(() => {});
+  }, [assuntoId]);
+
+  const alternarConcluido = async () => {
+    if (!assuntoId || salvandoStatus) return;
+    const novoStatus: TopicStatus = status === 'concluido' ? 'andamento' : 'concluido';
+
+    try {
+      setSalvandoStatus(true);
+      const atualizado = await topicsApi.updateStatus(assuntoId, novoStatus);
+      setStatus(atualizado.status);
+    } catch (e: any) {
+      if (e?.status !== 401) avisar('Erro', e?.message ?? 'Não foi possível atualizar o assunto.');
+    } finally {
+      setSalvandoStatus(false);
+    }
+  };
+
+  const iniciarAvaliacao = () => {
     setModalVisivel(false);
+
+    if (!assuntoId) {
+      avisar('Assunto não encontrado', 'Abra este assunto pela tela da matéria.');
+      return;
+    }
+
     navigation.navigate('Quiz', {
       assunto: assuntoTitulo,
       materia: materiaNome,
       totalQuestoes: qtdQuestoes,
+      topicId: assuntoId,
     });
   };
+
+  const rotuloStatus =
+    status === 'concluido' ? '✓ Concluído' : status === 'andamento' ? '◐ Em andamento' : '○ Pendente';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -63,12 +122,12 @@ export default function Assuntos() {
             {assuntoTitulo}
           </Text>
           <Text style={styles.subtituloHeader}>
-            📔 {materiaNome} · Assistente Trilha+
+            {materiaIcone} {materiaNome} · Assistente Trilha+
           </Text>
         </View>
 
         <View style={styles.badgeStatus}>
-          <Text style={styles.textoStatus}>• Online</Text>
+          <Text style={styles.textoStatus}>{rotuloStatus}</Text>
         </View>
       </View>
 
@@ -87,44 +146,53 @@ export default function Assuntos() {
             Vou te ajudar a dominar <Text style={{ fontWeight: 'bold' }}>{assuntoTitulo}</Text>. Vamos começar!
           </Text>
 
+          {carregando ? (
+            <View style={styles.linhaCarregando}>
+              <ActivityIndicator color="#2563EB" />
+              <Text style={styles.textoCarregando}>Preparando a explicação…</Text>
+            </View>
+          ) : null}
 
-          {/*aqui tem que colocar a IA para mandar o conteudo*/}
-          <Text style={styles.subtituloSecao}>O que são Variações Linguísticas?</Text>
+          {!carregando && erro ? (
+            <>
+              <Text style={styles.textoErro}>{erro}</Text>
+              {assuntoId ? (
+                <TouchableOpacity onPress={carregarExplicacao}>
+                  <Text style={styles.linkAcao}>Tentar novamente</Text>
+                </TouchableOpacity>
+              ) : null}
+            </>
+          ) : null}
 
-          <Text style={styles.paragrafo}>
-            A língua não é estática — ela varia de acordo com quem fala, onde fala, quando fala e em qual situação. Existem 4 tipos principais:
-          </Text>
+          {!carregando && !erro ? (
+            <>
+              <Text style={styles.subtituloSecao}>{assuntoTitulo}</Text>
+              <Text style={styles.paragrafo}>{explicacao}</Text>
+            </>
+          ) : null}
 
-          <View style={styles.itemTipo}>
-            <Text style={styles.itemTitulo}>🗺️ Regional</Text>
-            <Text style={styles.itemDescricao}>
-              — diferenças entre regiões. Ex: "oxente" no Nordeste, "bah" no Sul.
-            </Text>
-          </View>
-
-          <View style={styles.itemTipo}>
-            <Text style={styles.itemTitulo}>👥 Social</Text>
-            <Text style={styles.itemDescricao}>
-              — diferenças entre grupos sociais e gerações. Ex: gírias dos jovens.
-            </Text>
-          </View>
-
-          <View style={styles.itemTipo}>
-            <Text style={styles.itemTitulo}>⏳ Histórica</Text>
-            <Text style={styles.itemDescricao}>
-              — mudanças da língua ao longo do tempo. Ex: "vossa mercê" → "você".
-            </Text>
-          </View>
-
-          <View style={styles.itemTipo}>
-            <Text style={styles.itemTitulo}>🎯 Situacional</Text>
-            <Text style={styles.itemDescricao}>
-              — adaptação ao contexto. Você fala diferente com o chefe e com amigos.
-            </Text>
-          </View>
-
-          <Text style={styles.perguntaFinal}>Qual tipo quer aprofundar primeiro? 📚</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('ChatIA')}>
+            <Text style={styles.linkAcao}>💬 Tirar dúvidas com a IA</Text>
+          </TouchableOpacity>
         </View>
+
+        {assuntoId ? (
+          <TouchableOpacity
+            style={[styles.botaoConcluir, status === 'concluido' && styles.botaoConcluirAtivo]}
+            activeOpacity={0.8}
+            onPress={alternarConcluido}
+            disabled={salvandoStatus}
+          >
+            <Text
+              style={[
+                styles.textoBotaoConcluir,
+                status === 'concluido' && styles.textoBotaoConcluirAtivo,
+              ]}
+            >
+              {status === 'concluido' ? '✓ Assunto concluído (toque para reabrir)' : 'Marcar como concluído'}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
 
         {/* Banner do Teste */}
         <View style={styles.bannerTeste}>
@@ -226,6 +294,47 @@ export default function Assuntos() {
 }
 
 const styles = StyleSheet.create({
+  linhaCarregando: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  textoCarregando: {
+    fontSize: 14,
+    color: '#475569',
+  },
+  textoErro: {
+    fontSize: 14,
+    color: '#DC2626',
+    marginBottom: 8,
+  },
+  linkAcao: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#2563EB',
+    marginTop: 4,
+  },
+  botaoConcluir: {
+    borderWidth: 1,
+    borderColor: '#10B981',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginBottom: 16,
+    backgroundColor: '#FFFFFF',
+  },
+  botaoConcluirAtivo: {
+    backgroundColor: '#D1FAE5',
+  },
+  textoBotaoConcluir: {
+    color: '#059669',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  textoBotaoConcluirAtivo: {
+    color: '#047857',
+  },
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',

@@ -8,16 +8,82 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { authApi } from '../services/api';
+import { avisar } from '../utils/alerta';
+
+type Etapa = 'email' | 'codigo';
 
 export default function RecuperacaoSenha() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
+  const [etapa, setEtapa] = useState<Etapa>('email');
   const [email, setEmail] = useState<string>('');
+  const [codigo, setCodigo] = useState<string>('');
+  const [novaSenha, setNovaSenha] = useState<string>('');
+  const [confirmarSenha, setConfirmarSenha] = useState<string>('');
+  const [erro, setErro] = useState<string>('');
+  const [carregando, setCarregando] = useState<boolean>(false);
 
-  const handleRecuperacao = () => {
-    console.log('Enviando link de recuperação para:', email);
-    // Lógica para enviar o e-mail de recuperação aqui
+  const emailLimpo = email.trim().toLowerCase();
+
+  // Etapa 1: pede o código de 6 dígitos para o e-mail informado
+  const handleRecuperacao = async () => {
+    if (carregando) return;
+    if (!/^\S+@\S+\.\S+$/.test(emailLimpo)) {
+      setErro('Digite um e-mail válido.');
+      return;
+    }
+
+    try {
+      setCarregando(true);
+      setErro('');
+      await authApi.forgotPassword(emailLimpo);
+      setEtapa('codigo');
+    } catch (e: any) {
+      setErro(e?.message ?? 'Não foi possível enviar o código.');
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  // Etapa 2: confirma o código e grava a nova senha
+  const handleNovaSenha = async () => {
+    if (carregando) return;
+    if (!codigo.trim()) {
+      setErro('Digite o código recebido.');
+      return;
+    }
+    if (novaSenha.length < 6) {
+      setErro('A senha deve ter no mínimo 6 caracteres.');
+      return;
+    }
+    if (novaSenha !== confirmarSenha) {
+      setErro('As senhas não conferem.');
+      return;
+    }
+
+    try {
+      setCarregando(true);
+      setErro('');
+      await authApi.resetPassword(emailLimpo, codigo.trim(), novaSenha);
+      avisar('Senha alterada', 'Entre com a sua nova senha.');
+      navigation.navigate('Login');
+    } catch (e: any) {
+      setErro(e?.message ?? 'Não foi possível alterar a senha.');
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const voltar = () => {
+    if (etapa === 'codigo') {
+      setEtapa('email');
+      setErro('');
+      return;
+    }
+    navigation.goBack();
   };
 
   return (
@@ -27,32 +93,99 @@ export default function RecuperacaoSenha() {
         style={styles.container}
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <TouchableOpacity onPress={voltar} style={styles.backButton}>
             <Text style={styles.backButtonText}>{'<'}</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.content}>
-          <Text style={styles.title}>Recuperar senha</Text>
+          <Text style={styles.title}>
+            {etapa === 'email' ? 'Recuperar senha' : 'Criar nova senha'}
+          </Text>
           <Text style={styles.subtitle}>
-            Digite o e-mail cadastrado. Enviaremos um link para você criar uma nova senha.
+            {etapa === 'email'
+              ? 'Digite o e-mail cadastrado. Enviaremos um código para você criar uma nova senha.'
+              : `Se ${emailLimpo} estiver cadastrado, o código de 6 dígitos foi enviado. Digite o código e a nova senha.`}
           </Text>
 
           <View style={styles.form}>
-            <TextInput
-              style={styles.input}
-              placeholder="E-mail"
-              placeholderTextColor="#888"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              value={email}
-              onChangeText={setEmail}
-            />
+            {etapa === 'email' ? (
+              <TextInput
+                style={styles.input}
+                placeholder="E-mail"
+                placeholderTextColor="#888"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={email}
+                onChangeText={(texto) => {
+                  setEmail(texto);
+                  setErro('');
+                }}
+                onSubmitEditing={handleRecuperacao}
+              />
+            ) : (
+              <>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Código de 6 dígitos"
+                  placeholderTextColor="#888"
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  value={codigo}
+                  onChangeText={(texto) => {
+                    setCodigo(texto.replace(/\D/g, ''));
+                    setErro('');
+                  }}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Nova senha"
+                  placeholderTextColor="#888"
+                  secureTextEntry
+                  value={novaSenha}
+                  onChangeText={(texto) => {
+                    setNovaSenha(texto);
+                    setErro('');
+                  }}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Confirmar nova senha"
+                  placeholderTextColor="#888"
+                  secureTextEntry
+                  value={confirmarSenha}
+                  onChangeText={(texto) => {
+                    setConfirmarSenha(texto);
+                    setErro('');
+                  }}
+                  onSubmitEditing={handleNovaSenha}
+                />
+              </>
+            )}
 
-            <TouchableOpacity style={styles.button} onPress={handleRecuperacao} activeOpacity={0.8}>
-              <Text style={styles.buttonText}>Enviar link</Text>
+            {erro ? <Text style={styles.erroTexto}>{erro}</Text> : null}
+
+            <TouchableOpacity
+              style={[styles.button, carregando && { opacity: 0.7 }]}
+              onPress={etapa === 'email' ? handleRecuperacao : handleNovaSenha}
+              activeOpacity={0.8}
+              disabled={carregando}
+            >
+              {carregando ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.buttonText}>
+                  {etapa === 'email' ? 'Enviar código' : 'Salvar nova senha'}
+                </Text>
+              )}
             </TouchableOpacity>
+
+            {etapa === 'codigo' ? (
+              <TouchableOpacity onPress={handleRecuperacao} style={styles.reenviar} disabled={carregando}>
+                <Text style={styles.reenviarTexto}>Reenviar código</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -61,6 +194,22 @@ export default function RecuperacaoSenha() {
 }
 
 const styles = StyleSheet.create({
+  erroTexto: {
+    color: '#DC2626',
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: -8,
+    marginBottom: 16,
+  },
+  reenviar: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  reenviarTexto: {
+    color: '#4299E1',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   safeArea: {
     flex: 1,
     backgroundColor: '#F8F9FA',
@@ -112,7 +261,7 @@ const styles = StyleSheet.create({
     padding: 16,
     fontSize: 16,
     color: '#2D3748',
-    marginBottom: 24,
+    marginBottom: 16,
   },
   button: {
     backgroundColor: '#4299E1',

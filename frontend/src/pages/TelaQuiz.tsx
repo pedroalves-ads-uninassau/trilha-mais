@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, ActivityIndicator } from 'react-native';
 import { c, s, r } from '../theme/screenTheme';
 import type { ResultadoQuiz } from './TelaResultado';
 import { quizzesApi, ApiError } from '../services/api';
+import { avisar, confirmar } from '../utils/alerta';
 
 type Questao = {
   id: string;
@@ -46,13 +47,11 @@ export default function QuizScreen({ topicId, subjectId, questionCount = 10, onF
         setQuestoes(qs);
         setRespostas(Array(qs.length).fill(null));
       })
-      .catch((e) =>
-        Alert.alert(
-          'Erro',
-          e instanceof ApiError ? e.message : 'Não foi possível gerar o simulado.',
-          [{ text: 'Voltar', onPress: onClose }],
-        ),
-      )
+      .catch((e) => {
+        if (e?.status === 401) return;
+        avisar('Erro', e instanceof ApiError ? e.message : 'Não foi possível gerar o simulado.');
+        onClose?.();
+      })
       .finally(() => setCarregando(false));
   }, []);
 
@@ -78,7 +77,7 @@ export default function QuizScreen({ topicId, subjectId, questionCount = 10, onF
       .filter((x): x is { questionId: number; selectedOptionId: number } => x !== null);
 
     if (respondidasLista.length === 0) {
-      Alert.alert('Atenção', 'Responda ao menos uma questão.');
+      avisar('Atenção', 'Responda ao menos uma questão.');
       return;
     }
 
@@ -98,26 +97,24 @@ export default function QuizScreen({ topicId, subjectId, questionCount = 10, onF
         fracos: res.fracos,
       });
     } catch (e) {
-      Alert.alert('Erro', e instanceof ApiError ? e.message : 'Não foi possível enviar as respostas.');
+      avisar('Erro', e instanceof ApiError ? e.message : 'Não foi possível enviar as respostas.');
     } finally {
       setEnviando(false);
     }
   }
 
-  function finalizar() {
+  async function finalizar() {
     const faltam = total - respondidas;
     if (faltam > 0) {
-      Alert.alert(
+      const confirmado = await confirmar(
         'Finalizar quiz?',
         `Você ainda não respondeu ${faltam} ${faltam === 1 ? 'questão' : 'questões'}.`,
-        [
-          { text: 'Continuar respondendo', style: 'cancel' },
-          { text: 'Finalizar mesmo assim', onPress: concluir },
-        ],
+        'Finalizar mesmo assim',
+        'Continuar respondendo',
       );
-    } else {
-      concluir();
+      if (!confirmado) return;
     }
+    concluir();
   }
 
   function refazer() {
@@ -238,8 +235,12 @@ export default function QuizScreen({ topicId, subjectId, questionCount = 10, onF
         </TouchableOpacity>
 
         {ultima ? (
-          <TouchableOpacity style={[st.navBtn, st.navPrimario]} onPress={finalizar}>
-            <Text style={st.navTextoPrim}>Finalizar</Text>
+          <TouchableOpacity
+            style={[st.navBtn, st.navPrimario, enviando && st.off]}
+            onPress={finalizar}
+            disabled={enviando}
+          >
+            <Text style={st.navTextoPrim}>{enviando ? 'Enviando...' : 'Finalizar'}</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity style={[st.navBtn, st.navPrimario]} onPress={() => setIndice((i) => i + 1)}>

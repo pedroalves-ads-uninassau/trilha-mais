@@ -22,3 +22,8 @@ export const mapaCoresMaterias: Record<
   historia: { principal: colors.accent, suave: '#FDEEE1' },
   biologia: { principal: colors.success, suave: colors.successBg },
 };
+
+// A API pode devolver uma chave de cor que o app não conhece; nesse caso usa o azul padrão.
+export function normalizarChaveCor(chave?: string | null): ChaveCorMateria {
+  return chave && chave in mapaCoresMaterias ? (chave as ChaveCorMateria) : 'portugues';
+}

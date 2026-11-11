@@ -11,10 +11,10 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { topicsApi, paraAssuntoTela, ApiError } from '../services/api';
+import { avisar, confirmar } from '../utils/alerta';
 
 // Tipagens para o nosso mock de dados recebido por parâmetro
 export interface Assunto {
@@ -66,7 +66,9 @@ export default function Materia() {
       topicsApi
         .listBySubject(materia.id)
         .then((lista) => setAssuntosLista(lista.map(paraAssuntoTela)))
-        .catch(() => Alert.alert('Erro', 'Não foi possível carregar os assuntos.'));
+        .catch((e) => {
+          if (e?.status !== 401) avisar('Erro', e?.message ?? 'Não foi possível carregar os assuntos.');
+        });
     }, [materia.id])
   );
 
@@ -101,6 +103,18 @@ export default function Materia() {
       fecharModal();
     } catch (e) {
       setErroCadastro(e instanceof ApiError ? e.message : 'Não foi possível criar o assunto.');
+    }
+  };
+
+  const excluirAssunto = async (assunto: Assunto) => {
+    const confirmado = await confirmar('Excluir assunto', `Excluir "${assunto.titulo}"?`, 'Excluir');
+    if (!confirmado) return;
+
+    try {
+      await topicsApi.remove(assunto.id);
+      setAssuntosLista((listaAtual) => listaAtual.filter((item) => item.id !== assunto.id));
+    } catch (e) {
+      avisar('Erro', e instanceof ApiError ? e.message : 'Não foi possível excluir o assunto.');
     }
   };
 
@@ -215,8 +229,10 @@ export default function Materia() {
                     status: assunto.status,
                     titulo: assunto.titulo,
                     materiaNome: materia.nome,
+                    materiaIcone: materia.icone,
                   })
                 }
+                onLongPress={() => excluirAssunto(assunto)}
               >
                 <View style={[styles.assuntoIconeBase, { borderColor: config.cor }]}>
                   <Text style={{ color: config.cor, fontSize: 16, fontWeight: 'bold' }}>
