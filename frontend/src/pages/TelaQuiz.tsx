@@ -1,60 +1,106 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, Alert, ActivityIndicator } from 'react-native';
 import { c, s, r } from '../theme/screenTheme';
 import type { ResultadoQuiz } from './TelaResultado';
+import { quizzesApi, ApiError } from '../services/api';
 
-type Questao = { id: string; enunciado: string; alternativas: string[]; correta: number; assunto?: string };
-
-// TODO: troque pelo seu mock em src/Mocks ou pela API
-const QUESTOES: Questao[] = [
-  { id: 'q1', enunciado: 'Qual palavra abaixo é um substantivo?', alternativas: ['Correr', 'Felicidade', 'Rapidamente', 'Azul'], correta: 1, assunto: 'Classes gramaticais' },
-  { id: 'q2', enunciado: 'Em "Os alunos estudaram muito", o verbo é:', alternativas: ['Os', 'alunos', 'estudaram', 'muito'], correta: 2, assunto: 'Verbos' },
-  { id: 'q3', enunciado: 'Qual é o antônimo de "generoso"?', alternativas: ['Bondoso', 'Avarento', 'Gentil', 'Honesto'], correta: 1, assunto: 'Vocabulário' },
-  { id: 'q4', enunciado: 'Qual frase está no plural?', alternativas: ['O livro caiu', 'As casas são novas', 'Ela chegou cedo', 'Meu amigo veio'], correta: 1, assunto: 'Classes gramaticais' },
-];
+type Questao = {
+  id: string;
+  enunciado: string;
+  alternativas: string[];
+  opcaoIds: number[];
+  correta: number;
+  assunto?: string;
+};
 
 type Props = {
-  questoes?: Questao[];
-  onFinish?: (resultado: ResultadoQuiz) => void; // ex.: levar para a tela de resultado
+  topicId?: number;
+  subjectId?: number;
+  questionCount?: number;
+  onFinish?: (resultado: ResultadoQuiz) => void;
   onClose?: () => void;
 };
 
-export default function QuizScreen({ questoes = QUESTOES, onFinish, onClose }: Props) {
+export default function QuizScreen({ topicId, subjectId, questionCount = 10, onFinish, onClose }: Props) {
+  const [questoes, setQuestoes] = useState<Questao[]>([]);
+  const [quizId, setQuizId] = useState<number | null>(null);
+  const [carregando, setCarregando] = useState(true);
+  const [enviando, setEnviando] = useState(false);
   const total = questoes.length;
   const [indice, setIndice] = useState(0);
-  const [respostas, setRespostas] = useState<(number | null)[]>(Array(total).fill(null));
+  const [respostas, setRespostas] = useState<(number | null)[]>([]);
   const [finalizado, setFinalizado] = useState(false);
+
+  useEffect(() => {
+    quizzesApi
+      .generate({ topicId, subjectId, questionCount })
+      .then((d) => {
+        const qs: Questao[] = d.questions.map((q) => ({
+          id: String(q.id),
+          enunciado: q.text,
+          alternativas: q.options.map((o) => o.text),
+          opcaoIds: q.options.map((o) => o.id),
+          correta: -1, // o gabarito só vem depois do envio
+        }));
+        setQuizId(d.id);
+        setQuestoes(qs);
+        setRespostas(Array(qs.length).fill(null));
+      })
+      .catch((e) =>
+        Alert.alert(
+          'Erro',
+          e instanceof ApiError ? e.message : 'Não foi possível gerar o simulado.',
+          [{ text: 'Voltar', onPress: onClose }],
+        ),
+      )
+      .finally(() => setCarregando(false));
+  }, []);
 
   const q = questoes[indice];
   const respondidas = respostas.filter((x) => x !== null).length;
   const primeira = indice === 0;
   const ultima = indice === total - 1;
-  const acertos = respostas.filter((x, i) => x === questoes[i].correta).length;
+  const acertos = respostas.filter((x, i) => x === questoes[i]?.correta).length;
 
   function selecionar(i: number) {
     setRespostas((rs) => rs.map((x, k) => (k === indice ? i : x)));
   }
 
-  function concluir() {
-    if (onFinish) {
-      const revisao = questoes.map((qq, i) => ({
-        enunciado: qq.enunciado,
-        respostaUsuario: respostas[i] === null ? null : qq.alternativas[respostas[i] as number],
-        respostaCorreta: qq.alternativas[qq.correta],
-        acertou: respostas[i] === qq.correta,
-      }));
-      // assuntos: "foi bem" = acertou todas as questões do assunto; "melhorar" = errou ou deixou em branco alguma
-      const porAssunto: Record<string, boolean> = {};
-      questoes.forEach((qq, i) => {
-        if (!qq.assunto) return;
-        const ok = respostas[i] === qq.correta;
-        porAssunto[qq.assunto] = (porAssunto[qq.assunto] ?? true) && ok;
+  async function concluir() {
+    if (!onFinish || quizId === null || enviando) return;
+
+    const respondidasLista = questoes
+      .map((qq, i) =>
+        respostas[i] === null
+          ? null
+          : { questionId: Number(qq.id), selectedOptionId: qq.opcaoIds[respostas[i] as number] },
+      )
+      .filter((x): x is { questionId: number; selectedOptionId: number } => x !== null);
+
+    if (respondidasLista.length === 0) {
+      Alert.alert('Atenção', 'Responda ao menos uma questão.');
+      return;
+    }
+
+    try {
+      setEnviando(true);
+      const res = await quizzesApi.submit(quizId, respondidasLista);
+      onFinish({
+        acertos: res.correctAnswers,
+        total: res.totalQuestions,
+        revisao: res.results.map((x) => ({
+          enunciado: x.questionText,
+          respostaUsuario: x.selectedOptionText,
+          respostaCorreta: x.correctOptionText,
+          acertou: x.isCorrect,
+        })),
+        fortes: res.fortes,
+        fracos: res.fracos,
       });
-      const fortes = Object.keys(porAssunto).filter((a) => porAssunto[a]);
-      const fracos = Object.keys(porAssunto).filter((a) => !porAssunto[a]);
-      onFinish({ acertos, total, revisao, fortes, fracos });
-    } else {
-      setFinalizado(true); // sem navegação ligada, mostra o resultado aqui mesmo
+    } catch (e) {
+      Alert.alert('Erro', e instanceof ApiError ? e.message : 'Não foi possível enviar as respostas.');
+    } finally {
+      setEnviando(false);
     }
   }
 
@@ -80,7 +126,35 @@ export default function QuizScreen({ questoes = QUESTOES, onFinish, onClose }: P
     setFinalizado(false);
   }
 
-  // ---------- Tela de resultado (Finalização) ----------
+  // ---------- Carregando ----------
+  if (carregando) {
+    return (
+      <SafeAreaView style={st.tela}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator size="large" />
+          <Text style={{ marginTop: 12 }}>Gerando seu simulado...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // ---------- Sem questões ----------
+  if (!finalizado && !q) {
+    return (
+      <SafeAreaView style={st.tela}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <Text style={{ textAlign: 'center', marginBottom: 16 }}>
+            Não foi possível carregar as questões.
+          </Text>
+          <TouchableOpacity style={st.botao} onPress={onClose}>
+            <Text style={st.botaoTexto}>Voltar</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // ---------- Tela de resultado (usada só se não houver onFinish) ----------
   if (finalizado) {
     const nota = Math.round((acertos / total) * 100);
     return (

@@ -45,12 +45,20 @@ export default function AppRoutes() {
 
         {/* Tela de Quiz interativo */}
         <Stack.Screen name="Quiz">
-          {({ navigation }) => (
-            <QuizScreen
-              onClose={() => navigation.goBack()}
-              onFinish={(resultado) => navigation.replace('Resultado', { resultado })}
-            />
-          )}
+          {({ route, navigation }) => {
+            const p = (route.params as any) ?? {};
+            return (
+              <QuizScreen
+                topicId={p.topicId}
+                subjectId={p.subjectId}
+                questionCount={p.totalQuestoes}
+                onClose={() => navigation.goBack()}
+                onFinish={(resultado) =>
+                  navigation.replace('Resultado', { resultado, quizParams: p })
+                }
+              />
+            );
+          }}
         </Stack.Screen>
 
         {/* Tela de Resultado com revisão e pontos fortes/fracos */}
@@ -58,7 +66,7 @@ export default function AppRoutes() {
           {({ route, navigation }) => (
             <ResultadoScreen
               resultado={(route.params as any)?.resultado}
-              onRefazer={() => navigation.replace('Quiz')}
+              onRefazer={() => navigation.replace('Quiz', (route.params as any)?.quizParams)}
               onDesempenho={() => navigation.navigate('Progresso')}
               onVoltar={() => navigation.navigate('Home')}
             />

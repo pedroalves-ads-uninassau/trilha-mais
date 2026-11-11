@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -7,19 +7,26 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import BarraNavegacao, { ChaveAba } from '../components/BarraNavegacao'; // Ajuste o caminho conforme seu projeto
-
-// Dados mockados para as matérias
-const desempenhoMaterias = [
-  { id: '1', nome: 'Português', porcentagem: 72, cor: '#2F68E9' },
-  { id: '2', nome: 'Matemática', porcentagem: 50, cor: '#8B5CF6' },
-  { id: '3', nome: 'Biologia', porcentagem: 85, cor: '#10B981' },
-  { id: '4', nome: 'História', porcentagem: 17, cor: '#F59E0B' },
-];
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import BarraNavegacao, { ChaveAba } from '../components/BarraNavegacao';
+import { performanceApi, ProgressOverview } from '../services/api';
 
 export default function Progresso() {
   const navigation = useNavigation<any>();
+  const [dados, setDados] = useState<ProgressOverview | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      performanceApi.overview().then(setDados).catch(() => {});
+    }, [])
+  );
+
+  const desempenhoMaterias = (dados?.subjects ?? []).map((s) => ({
+    id: String(s.subjectId),
+    nome: s.subjectName,
+    porcentagem: Math.round(s.accuracyRate),
+    cor: s.primaryColor,
+  }));
 
   const aoMudarAba = (novaAba: ChaveAba) => {
     if (novaAba === 'inicio') navigation.navigate('Home');
@@ -46,22 +53,24 @@ export default function Progresso() {
           <View style={styles.cardMediaGeral}>
             <View style={styles.blocoMedia}>
               <Text style={styles.textoMediaGeral}>MÉDIA GERAL</Text>
-              <Text style={styles.valorMediaGeral}>82%</Text>
+              <Text style={styles.valorMediaGeral}>
+                {Math.round(dados?.overallAccuracyRate ?? 0)}%
+              </Text>
             </View>
 
             <View style={styles.divisor} />
 
             <View style={styles.blocoEstatisticas}>
               <View style={styles.estatisticaItem}>
-                <Text style={styles.estatisticaValor}>8</Text>
+                <Text style={styles.estatisticaValor}>{dados?.evaluationsCount ?? 0}</Text>
                 <Text style={styles.estatisticaRotulo}>Avaliações</Text>
               </View>
               <View style={styles.estatisticaItem}>
-                <Text style={styles.estatisticaValor}>17</Text>
+                <Text style={styles.estatisticaValor}>{dados?.topicsStudied ?? 0}</Text>
                 <Text style={styles.estatisticaRotulo}>Estudados</Text>
               </View>
               <View style={styles.estatisticaItem}>
-                <Text style={styles.estatisticaValor}>🔥 5</Text>
+                <Text style={styles.estatisticaValor}>🔥 {dados?.streakDays ?? 0}</Text>
                 <Text style={styles.estatisticaRotulo}>Sequência</Text>
               </View>
             </View>
@@ -94,19 +103,29 @@ export default function Progresso() {
 
           {/* Cards de Destaque */}
           <View style={styles.linhaCardsDestaque}>
-            {/* Card Melhor Matéria */}
-            <View style={[styles.cardDestaque, { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' }]}>
-              <Text style={[styles.tituloDestaque, { color: '#059669' }]}>MELHOR MATÉRIA</Text>
-              <Text style={styles.nomeDestaque}>🔬 Biologia</Text>
-              <Text style={[styles.descDestaque, { color: '#059669' }]}>85% de{'\n'}aproveitamento</Text>
-            </View>
+            {dados?.bestSubject ? (
+              <View style={[styles.cardDestaque, { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' }]}>
+                <Text style={[styles.tituloDestaque, { color: '#059669' }]}>MELHOR MATÉRIA</Text>
+                <Text style={styles.nomeDestaque}>
+                  {dados.bestSubject.icon} {dados.bestSubject.subjectName}
+                </Text>
+                <Text style={[styles.descDestaque, { color: '#059669' }]}>
+                  {Math.round(dados.bestSubject.accuracyRate)}% de{'\n'}aproveitamento
+                </Text>
+              </View>
+            ) : null}
 
-            {/* Card Precisa Revisar */}
-            <View style={[styles.cardDestaque, { backgroundColor: '#FFFBEB', borderColor: '#FDE68A' }]}>
-              <Text style={[styles.tituloDestaque, { color: '#D97706' }]}>PRECISA REVISAR</Text>
-              <Text style={styles.nomeDestaque}>📖 História</Text>
-              <Text style={[styles.descDestaque, { color: '#D97706' }]}>17% de{'\n'}aproveitamento</Text>
-            </View>
+            {dados?.needsReview ? (
+              <View style={[styles.cardDestaque, { backgroundColor: '#FFFBEB', borderColor: '#FDE68A' }]}>
+                <Text style={[styles.tituloDestaque, { color: '#D97706' }]}>PRECISA REVISAR</Text>
+                <Text style={styles.nomeDestaque}>
+                  {dados.needsReview.icon} {dados.needsReview.subjectName}
+                </Text>
+                <Text style={[styles.descDestaque, { color: '#D97706' }]}>
+                  {Math.round(dados.needsReview.accuracyRate)}% de{'\n'}aproveitamento
+                </Text>
+              </View>
+            ) : null}
           </View>
         </View>
       </ScrollView>
@@ -120,7 +139,7 @@ export default function Progresso() {
 const styles = StyleSheet.create({
   areaSegura: {
     flex: 1,
-    backgroundColor: '#2F68E9', 
+    backgroundColor: '#2F68E9',
   },
   scroll: {
     flex: 1,

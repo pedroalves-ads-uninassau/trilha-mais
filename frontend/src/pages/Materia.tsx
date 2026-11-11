@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,9 +11,10 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { useState } from 'react';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import { topicsApi, paraAssuntoTela, ApiError } from '../services/api';
 
 // Tipagens para o nosso mock de dados recebido por parâmetro
 export interface Assunto {
@@ -38,7 +39,7 @@ export interface MateriaParams {
 export default function Materia() {
   const navigation = useNavigation<any>();
   const route = useRoute();
-  
+
   // Recebe os dados da matéria passados pela navegação com fallback seguro
   const dados = (route.params as MateriaParams) || ({} as MateriaParams);
   const materia: MateriaParams = {
@@ -53,10 +54,21 @@ export default function Materia() {
     progresso: dados.progresso || 0,
     assuntosLista: dados.assuntosLista || [],
   };
+
   const [assuntosLista, setAssuntosLista] = useState<Assunto[]>(materia.assuntosLista);
   const [modalVisivel, setModalVisivel] = useState(false);
   const [novoAssunto, setNovoAssunto] = useState('');
   const [erroCadastro, setErroCadastro] = useState('');
+
+  // Carrega os assuntos da API sempre que a tela ganha foco
+  useFocusEffect(
+    useCallback(() => {
+      topicsApi
+        .listBySubject(materia.id)
+        .then((lista) => setAssuntosLista(lista.map(paraAssuntoTela)))
+        .catch(() => Alert.alert('Erro', 'Não foi possível carregar os assuntos.'));
+    }, [materia.id])
+  );
 
   const concluidos = assuntosLista.filter((assunto) => assunto.status === 'concluido').length;
   const emAndamento = assuntosLista.filter((assunto) => assunto.status === 'andamento').length;
@@ -71,7 +83,7 @@ export default function Materia() {
     setErroCadastro('');
   };
 
-  const adicionarAssunto = () => {
+  const adicionarAssunto = async () => {
     const titulo = novoAssunto.trim();
     if (!titulo) {
       setErroCadastro('Digite o nome do assunto.');
@@ -83,15 +95,13 @@ export default function Materia() {
       return;
     }
 
-    setAssuntosLista((listaAtual) => [
-      ...listaAtual,
-      {
-        id: `assunto-${Date.now()}`,
-        titulo,
-        status: 'pendente',
-      },
-    ]);
-    fecharModal();
+    try {
+      const criado = await topicsApi.create(materia.id, { name: titulo });
+      setAssuntosLista((listaAtual) => [...listaAtual, paraAssuntoTela(criado)]);
+      fecharModal();
+    } catch (e) {
+      setErroCadastro(e instanceof ApiError ? e.message : 'Não foi possível criar o assunto.');
+    }
   };
 
   // Função auxiliar para renderizar o ícone e cor do status do assunto
@@ -110,11 +120,10 @@ export default function Materia() {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: materia.corPrimaria }]}>
       <StatusBar barStyle="light-content" backgroundColor={materia.corPrimaria} />
-      
+
       {/* Cabeçalho Colorido */}
       <View style={[styles.header, { backgroundColor: materia.corPrimaria }]}>
-        
-        {/* Bolhas decorativas de fundo (Design idêntico à imagem) */}
+        {/* Bolhas decorativas de fundo */}
         <View style={styles.bolhaDecorativa1} />
         <View style={styles.bolhaDecorativa2} />
 
@@ -125,7 +134,7 @@ export default function Materia() {
               <Text style={styles.iconeTexto}>{materia.icone}</Text>
             </View>
             <View style={styles.botaoVoltarOverlay}>
-               <Text style={styles.setaVoltar}>{'<'}</Text>
+              <Text style={styles.setaVoltar}>{'<'}</Text>
             </View>
           </TouchableOpacity>
           <View style={styles.tituloContainer}>
@@ -194,14 +203,16 @@ export default function Materia() {
           ) : null}
           {assuntosLista.map((assunto) => {
             const config = getStatusConfig(assunto.status);
-            
+
             return (
-              <TouchableOpacity 
-                key={assunto.id} 
-                style={styles.assuntoCard} 
+              <TouchableOpacity
+                key={assunto.id}
+                style={styles.assuntoCard}
                 activeOpacity={0.7}
-                onPress={() => 
+                onPress={() =>
                   navigation.navigate('Assuntos', {
+                    assuntoId: assunto.id,
+                    status: assunto.status,
                     titulo: assunto.titulo,
                     materiaNome: materia.nome,
                   })
@@ -299,7 +310,6 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     overflow: 'hidden',
   },
-  // Efeito visual dos círculos no topo direito
   bolhaDecorativa1: {
     position: 'absolute',
     top: -50,
@@ -415,7 +425,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 0, // Design reto na separação
+    borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
     paddingHorizontal: 24,
     paddingTop: 24,
@@ -567,8 +577,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    elevation: 1, // Sombra suave Android
-    shadowColor: '#000', // Sombra suave iOS
+    elevation: 1,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
