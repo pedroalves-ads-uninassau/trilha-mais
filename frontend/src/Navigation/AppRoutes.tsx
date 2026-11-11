@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Platform, View } from 'react-native';
 import { NavigationContainer, createNavigationContainerRef } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Login from "../pages/TelaLogin";
@@ -48,6 +48,22 @@ export default function AppRoutes() {
     })();
 
     return () => definirAoExpirarSessao(null);
+  }, []);
+
+  useEffect(() => {
+    // Web: o native-stack esconde a tela anterior com aria-hidden enquanto o botão
+    // clicado nela ainda tem o foco, e o navegador avisa "Blocked aria-hidden".
+    // Por isso tiramos o foco do elemento ativo antes de a navegação trocar de tela.
+    if (Platform.OS !== 'web') return;
+
+    const tirarFoco = () => {
+      const ativo = document.activeElement;
+      if (ativo instanceof HTMLElement) ativo.blur();
+    };
+
+    // O ref guarda o listener e o liga ao NavigationContainer quando ele monta
+    navegacaoRef.addListener('__unsafe_action__', tirarFoco);
+    return () => navegacaoRef.removeListener('__unsafe_action__', tirarFoco);
   }, []);
 
   if (!rotaInicial) {
